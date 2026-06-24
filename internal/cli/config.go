@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"runtime"
 
+	"github.com/simtabi/ms-teams-activity/internal/cli/ui"
 	"github.com/simtabi/ms-teams-activity/internal/config"
 	"github.com/spf13/cobra"
 )
@@ -26,12 +27,15 @@ var configInitCmd = &cobra.Command{
 			return err
 		}
 		if _, err := os.Stat(p); err == nil && !flagForce {
-			return fmt.Errorf("%s already exists (use --force to overwrite)", p)
+			if !ui.Confirm(fmt.Sprintf("%s exists. Overwrite with defaults?", p), false) {
+				ui.Info("cancelled")
+				return nil
+			}
 		}
 		if err := config.Default().Save(p); err != nil {
 			return err
 		}
-		fmt.Printf("Wrote default config to %s\n", p)
+		ui.Success("wrote default config to %s", p)
 		return nil
 	},
 }
@@ -60,7 +64,7 @@ var configValidateCmd = &cobra.Command{
 		if flagJSON {
 			return printJSON(map[string]any{"valid": true, "engine": c.Engine})
 		}
-		fmt.Println("config is valid")
+		ui.Success("config is valid")
 		return nil
 	},
 }
@@ -105,7 +109,7 @@ var configEditCmd = &cobra.Command{
 		if _, err := config.Load(p); err != nil {
 			return fmt.Errorf("saved, but config is now invalid: %w", err)
 		}
-		fmt.Println("config saved and valid")
+		ui.Success("config saved and valid")
 		return nil
 	},
 }
@@ -147,7 +151,7 @@ var configSetCmd = &cobra.Command{
 		if err := c.Save(p); err != nil {
 			return err
 		}
-		fmt.Printf("%s = %s\n", args[0], args[1])
+		ui.Success("%s = %s", args[0], args[1])
 		return nil
 	},
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/simtabi/ms-teams-activity/internal/cli/ui"
 	"github.com/simtabi/ms-teams-activity/internal/config"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
@@ -15,6 +16,9 @@ var (
 	flagConfig  string
 	flagJSON    bool
 	flagVerbose bool
+	flagYes     bool
+	flagNoInput bool
+	flagNoColor bool
 )
 
 var rootCmd = &cobra.Command{
@@ -24,7 +28,16 @@ var rootCmd = &cobra.Command{
 configurable work schedule (e.g. Mon-Fri 08:00-17:00) or at will, using either
 synthetic input or the Microsoft Graph presence API.
 
-Run without a subcommand on a terminal to open the interactive TUI.`,
+Run without a subcommand on a terminal to open the interactive TUI.
+
+Global flags: --yes/-y (assume yes), --no-input (never prompt; for scripts),
+--no-color, --json, --scope user|system. Honored env vars: NO_COLOR, TERM,
+EDITOR (config edit), XDG_CONFIG_HOME/XDG_STATE_HOME (file locations).`,
+	Example: `  mta                      # open the interactive TUI
+  mta install --init       # configure + install + start the daemon
+  mta on --for 2h          # stay Available for two hours
+  mta status --json        # machine-readable status
+  mta upgrade --check      # see if a newer release exists`,
 	SilenceUsage:  true,
 	SilenceErrors: true,
 	RunE: func(cmd *cobra.Command, _ []string) error {
@@ -49,6 +62,20 @@ func init() {
 	pf.StringVar(&flagConfig, "config", "", "path to config.json (overrides scope default)")
 	pf.BoolVar(&flagJSON, "json", false, "emit machine-readable JSON where supported")
 	pf.BoolVar(&flagVerbose, "verbose", false, "verbose (debug) logging")
+	pf.BoolVarP(&flagYes, "yes", "y", false, "assume yes to all confirmation prompts")
+	pf.BoolVar(&flagNoInput, "no-input", false, "never prompt; use safe defaults (for scripts)")
+	pf.BoolVar(&flagNoColor, "no-color", false, "disable colored output (also honors NO_COLOR)")
+
+	// Validate global flags once and propagate UI settings before any command runs.
+	rootCmd.PersistentPreRunE = func(_ *cobra.Command, _ []string) error {
+		if !config.Scope(flagScope).Valid() {
+			return fmt.Errorf("invalid --scope %q (use \"user\" or \"system\")", flagScope)
+		}
+		ui.SetAssumeYes(flagYes)
+		ui.SetNoInput(flagNoInput)
+		ui.SetNoColor(flagNoColor)
+		return nil
+	}
 }
 
 // scope resolves the --scope flag into a config.Scope, defaulting to user.

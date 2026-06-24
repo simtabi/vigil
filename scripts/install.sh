@@ -47,7 +47,12 @@ tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
 echo "Downloading ${asset}..."
-if curl -fsSL "${BASE}/${asset}" -o "${tmp}/${asset}" && curl -fsSL "${BASE}/checksums.txt" -o "${tmp}/checksums.txt"; then
+# Show a progress bar (transfer rate + ETA) on an interactive terminal; stay
+# quiet when piped (curl | sh, CI logs).
+dl_opts="-fsSL"
+[ -t 1 ] && dl_opts="-fL --progress-bar"
+# shellcheck disable=SC2086
+if curl $dl_opts "${BASE}/${asset}" -o "${tmp}/${asset}" && curl -fsSL "${BASE}/checksums.txt" -o "${tmp}/checksums.txt"; then
   want=$(awk -v a="$asset" '$NF==a || $NF=="./"a {print $1; exit}' "${tmp}/checksums.txt")
   if [ -z "$want" ]; then echo "checksum for ${asset} not found" >&2; exit 1; fi
   echo "Verifying checksum..."

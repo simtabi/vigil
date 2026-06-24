@@ -6,6 +6,7 @@ import (
 	"os"
 	"runtime"
 
+	"github.com/simtabi/ms-teams-activity/internal/cli/ui"
 	"github.com/simtabi/ms-teams-activity/internal/config"
 	"github.com/simtabi/ms-teams-activity/internal/selfupdate"
 	"github.com/simtabi/ms-teams-activity/internal/service"
@@ -14,14 +15,14 @@ import (
 
 var (
 	flagCheck bool
-	flagYes   bool
 	flagPurge bool
 )
 
 var upgradeCmd = &cobra.Command{
-	Use:   "upgrade",
-	Short: "Update mta to the latest release (alias of `self update`)",
-	RunE:  func(_ *cobra.Command, _ []string) error { return doUpgrade() },
+	Use:     "upgrade",
+	Short:   "Update mta to the latest release (alias of `self update`)",
+	Example: "  mta upgrade --check\n  mta upgrade --yes",
+	RunE:    func(_ *cobra.Command, _ []string) error { return doUpgrade() },
 }
 
 var selfCmd = &cobra.Command{
@@ -57,8 +58,12 @@ func doUpgrade() error {
 
 	// Always allow a check; only block the apply for dev/package-managed.
 	if flagCheck {
-		info, err := selfupdate.Check(ctx, version)
-		if err != nil {
+		var info selfupdate.Info
+		if err := ui.Spin("Checking for updates", func() error {
+			var e error
+			info, e = selfupdate.Check(ctx, version)
+			return e
+		}); err != nil {
 			return err
 		}
 		printCheck(info, ch)
@@ -72,16 +77,20 @@ func doUpgrade() error {
 		return fmt.Errorf("not self-updating: %s", ch.Advice())
 	}
 
-	info, err := selfupdate.Check(ctx, version)
-	if err != nil {
+	var info selfupdate.Info
+	if err := ui.Spin("Checking for updates", func() error {
+		var e error
+		info, e = selfupdate.Check(ctx, version)
+		return e
+	}); err != nil {
 		return err
 	}
 	if !info.Available {
-		fmt.Printf("already up to date (%s)\n", version)
+		ui.Info("already up to date (%s)", version)
 		return nil
 	}
-	if !flagYes && !confirm(fmt.Sprintf("update %s → %s?", info.Current, info.Latest)) {
-		fmt.Println("cancelled")
+	if !ui.Confirm(fmt.Sprintf("Update %s → %s?", info.Current, info.Latest), false) {
+		ui.Info("cancelled")
 		return nil
 	}
 
@@ -91,20 +100,23 @@ func doUpgrade() error {
 	if haveParams {
 		if st, err := service.StatusString(params); err == nil && st == "running" {
 			wasRunning = true
-			fmt.Println("stopping service...")
-			_ = service.Stop(params)
+			_ = ui.Spin("Stopping service", func() error { return service.Stop(params) })
 		}
 	}
 
-	applied, err := selfupdate.Apply(ctx, version)
+	var applied selfupdate.Info
+	applyErr := ui.Spin(fmt.Sprintf("Downloading %s", info.Latest), func() error {
+		var e error
+		applied, e = selfupdate.Apply(ctx, version)
+		return e
+	})
 	if wasRunning {
-		fmt.Println("restarting service...")
-		_ = service.Start(params)
+		_ = ui.Spin("Restarting service", func() error { return service.Start(params) })
 	}
-	if err != nil {
-		return err
+	if applyErr != nil {
+		return applyErr
 	}
-	fmt.Printf("updated to %s\n", applied.Latest)
+	ui.Success("updated to %s", applied.Latest)
 	tccReminderIfNeeded()
 	return nil
 }
@@ -143,21 +155,21 @@ func doSelfInstall() error {
 	if err := copyFile(src, dst, 0o755); err != nil {
 		return err
 	}
-	fmt.Printf("installed: %s\n", dst)
-	fmt.Printf("ensure %s is on your PATH, then run `mta config init` and `mta install`.\n", dir)
+	ui.Success("installed: %s", dst)
+	ui.Info("ensure %s is on your PATH, then run `mta config wizard` and `mta install`.", dir)
 	tccReminderIfNeeded()
 	return nil
 }
 
 func doSelfUninstall() error {
-	if !flagYes && !confirm("remove the mta service and binary?") {
-		fmt.Println("cancelled")
+	if !ui.Confirm("Remove the mta service and binary?", false) {
+		ui.Info("cancelled")
 		return nil
 	}
 	// Remove the service/task first (best effort).
 	if params, ok := serviceParamsBestEffort(); ok {
-		if err := service.Uninstall(params); err != nil {
-			fmt.Fprintln(os.Stderr, "warning: service uninstall:", err)
+		if err := ui.Spin("Removing service", func() error { return service.Uninstall(params) }); err != nil {
+			ui.Warn("service uninstall: %v", err)
 		}
 	}
 
@@ -168,7 +180,7 @@ func doSelfUninstall() error {
 		if dir, err := config.RuntimeDir(scope()); err == nil {
 			_ = os.RemoveAll(dir)
 		}
-		fmt.Println("removed config and runtime data")
+		ui.Info("removed config and runtime data")
 	}
 
 	exe, err := selfupdate.ExecutablePath()
@@ -176,23 +188,20 @@ func doSelfUninstall() error {
 		return err
 	}
 	if runtime.GOOS == "windows" {
-		fmt.Printf("service removed. Delete the binary manually (it is running): %s\n", exe)
+		ui.Warn("service removed. Delete the binary manually (it is running): %s", exe)
 		return nil
 	}
 	if err := os.Remove(exe); err != nil {
-		fmt.Fprintf(os.Stderr, "could not remove binary %s: %v\n", exe, err)
+		ui.Warn("could not remove binary %s: %v", exe, err)
 		return nil
 	}
-	fmt.Printf("removed binary: %s\n", exe)
+	ui.Success("removed binary: %s", exe)
 	return nil
 }
 
 func init() {
 	upgradeCmd.Flags().BoolVar(&flagCheck, "check", false, "only report whether an update is available")
-	upgradeCmd.Flags().BoolVar(&flagYes, "yes", false, "do not prompt for confirmation")
 	selfUpdateCmd.Flags().BoolVar(&flagCheck, "check", false, "only report whether an update is available")
-	selfUpdateCmd.Flags().BoolVar(&flagYes, "yes", false, "do not prompt for confirmation")
-	selfUninstallCmd.Flags().BoolVar(&flagYes, "yes", false, "do not prompt for confirmation")
 	selfUninstallCmd.Flags().BoolVar(&flagPurge, "purge", false, "also delete config and runtime data")
 
 	selfCmd.AddCommand(selfUpdateCmd, selfInstallCmd, selfUninstallCmd)

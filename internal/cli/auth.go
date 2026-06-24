@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/simtabi/ms-teams-activity/internal/cli/ui"
 	"github.com/simtabi/ms-teams-activity/internal/config"
 	"github.com/simtabi/ms-teams-activity/internal/graph"
 	"github.com/spf13/cobra"
@@ -40,7 +41,7 @@ var authLoginCmd = &cobra.Command{
 		if err := c.Login(context.Background(), func(msg string) { fmt.Println(msg) }); err != nil {
 			return err
 		}
-		fmt.Println("signed in; token cached")
+		ui.Success("signed in; token cached")
 		return nil
 	},
 }
@@ -77,10 +78,14 @@ var authLogoutCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		if !ui.Confirm("Sign out and remove cached credentials?", false) {
+			ui.Info("cancelled")
+			return nil
+		}
 		if err := c.Logout(context.Background()); err != nil {
 			return err
 		}
-		fmt.Println("signed out")
+		ui.Success("signed out")
 		return nil
 	},
 }

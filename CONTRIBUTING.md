@@ -28,6 +28,10 @@ CGO_ENABLED=0 GOOS=linux   go build ./...
 - Public packages and exported symbols carry doc comments.
 - New behavior comes with table-driven tests where practical (see
   `internal/schedule` and `internal/config`).
+- CLI output follows [docs/cli.md](docs/cli.md): route human status/prompts
+  through `internal/cli/ui` (stderr, TTY/color-aware), keep primary and `--json`
+  output on stdout, confirm destructive actions with `ui.Confirm`, and validate
+  input early.
 - Commit subjects are imperative and ≤ 72 chars; bodies explain *why*.
 
 ## Architecture

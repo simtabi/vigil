@@ -1,26 +1,15 @@
 package cli
 
 import (
-	"bufio"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 
+	"github.com/simtabi/ms-teams-activity/internal/cli/ui"
 	"github.com/simtabi/ms-teams-activity/internal/config"
 	"github.com/simtabi/ms-teams-activity/internal/service"
 )
-
-// confirm prompts for a yes/no answer (default no).
-func confirm(prompt string) bool {
-	fmt.Printf("%s [y/N]: ", prompt)
-	r := bufio.NewReader(os.Stdin)
-	line, _ := r.ReadString('\n')
-	line = strings.ToLower(strings.TrimSpace(line))
-	return line == "y" || line == "yes"
-}
 
 // binName is the platform binary filename.
 func binName() string {
@@ -101,6 +90,6 @@ func tccReminderIfNeeded() {
 		return
 	}
 	if cfg, err := loadConfig(); err == nil && cfg.UsesInput() {
-		fmt.Println("note: the binary changed — macOS may require re-granting Accessibility (System Settings → Privacy & Security → Accessibility). Run `mta doctor` to confirm.")
+		ui.Warn("the binary changed — macOS may require re-granting Accessibility (System Settings → Privacy & Security → Accessibility). Run `mta doctor` to confirm.")
 	}
 }

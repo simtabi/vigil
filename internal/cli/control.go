@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/simtabi/ms-teams-activity/internal/cli/ui"
 	"github.com/simtabi/ms-teams-activity/internal/config"
 	"github.com/simtabi/ms-teams-activity/internal/control"
 	"github.com/simtabi/ms-teams-activity/internal/schedule"
@@ -40,7 +41,7 @@ var resumeCmd = &cobra.Command{
 		if err := os.Remove(control.OverridePath(rt)); err != nil && !os.IsNotExist(err) {
 			return err
 		}
-		fmt.Println("override cleared; following schedule")
+		ui.Success("override cleared; following schedule")
 		return nil
 	},
 }
@@ -65,7 +66,10 @@ func setOverride(mode schedule.OverrideMode) error {
 	case flagFor != "":
 		d, err := time.ParseDuration(flagFor)
 		if err != nil {
-			return fmt.Errorf("--for: %w", err)
+			return fmt.Errorf("--for: %w (e.g. 30m, 2h, 1h30m)", err)
+		}
+		if d <= 0 {
+			return fmt.Errorf("--for must be a positive duration, got %q", flagFor)
 		}
 		u := now.Add(d)
 		ov.Until = &u
@@ -81,9 +85,9 @@ func setOverride(mode schedule.OverrideMode) error {
 		return err
 	}
 	if ov.Until != nil {
-		fmt.Printf("override %s until %s\n", mode, ov.Until.Format("Mon 15:04"))
+		ui.Success("override %s until %s", mode, ov.Until.Format("Mon 15:04"))
 	} else {
-		fmt.Printf("override %s (indefinite; `mta resume` to clear)\n", mode)
+		ui.Success("override %s (indefinite; `mta resume` to clear)", mode)
 	}
 	return nil
 }

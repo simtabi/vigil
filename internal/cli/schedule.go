@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/simtabi/ms-teams-activity/internal/cli/ui"
 	"github.com/simtabi/ms-teams-activity/internal/config"
 	"github.com/spf13/cobra"
 )
@@ -67,7 +68,7 @@ var scheduleAddCmd = &cobra.Command{
 		if err := c.Save(p); err != nil {
 			return err
 		}
-		fmt.Printf("added window: %s %s–%s\n", strings.Join(days, ","), flagStart, flagEnd)
+		ui.Success("added window: %s %s–%s", strings.Join(days, ","), flagStart, flagEnd)
 		return nil
 	},
 }
@@ -93,7 +94,7 @@ var scheduleRemoveCmd = &cobra.Command{
 		if err := c.Save(p); err != nil {
 			return err
 		}
-		fmt.Printf("removed window %d\n", idx)
+		ui.Success("removed window %d", idx)
 		return nil
 	},
 }
@@ -110,11 +111,15 @@ var scheduleClearCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		if len(c.Schedule.Windows) > 0 && !ui.Confirm(fmt.Sprintf("Remove all %d schedule window(s)?", len(c.Schedule.Windows)), false) {
+			ui.Info("cancelled")
+			return nil
+		}
 		c.Schedule.Windows = nil
 		if err := c.Save(p); err != nil {
 			return err
 		}
-		fmt.Println("cleared all windows")
+		ui.Success("cleared all windows")
 		return nil
 	},
 }

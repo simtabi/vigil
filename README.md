@@ -117,6 +117,7 @@ curl -fsSL https://raw.githubusercontent.com/simtabi/ms-teams-activity/main/scri
 | [installation.md](docs/installation.md) | Building, installing, scope, and the per-OS service mechanism |
 | [configuration.md](docs/configuration.md) | The `config.json` schema, schedules, overrides, and file locations |
 | [tui.md](docs/tui.md) | The interactive menu UI — navigation, screens, and editor keys |
+| [cli.md](docs/cli.md) | CLI conventions — flags, prompts, color, exit codes, env vars |
 | [architecture.md](docs/architecture.md) | Engines, the daemon loop, control plane, and design decisions |
 | [tools/input-engine.md](docs/tools/input-engine.md) | The synthetic-input engine and its per-OS behavior |
 | [tools/graph-engine.md](docs/tools/graph-engine.md) | The Microsoft Graph engine, Entra app setup, and admin consent |

@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/simtabi/ms-teams-activity/internal/cli/ui"
 	"github.com/simtabi/ms-teams-activity/internal/config"
 	"github.com/simtabi/ms-teams-activity/internal/service"
 	"github.com/spf13/cobra"
@@ -65,17 +66,26 @@ var installCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		note, err := service.Install(p)
+		var note string
+		err = ui.Spin("Installing service", func() error {
+			var e error
+			note, e = service.Install(p)
+			return e
+		})
 		if err != nil {
 			if alreadyInstalled(err) {
-				fmt.Println("service already installed; restarting")
-				return service.Restart(p)
+				ui.Info("service already installed; restarting")
+				if e := ui.Spin("Restarting service", func() error { return service.Restart(p) }); e != nil {
+					return e
+				}
+				ui.Success("restarted")
+				return nil
 			}
 			return err
 		}
-		fmt.Println("installed and started")
+		ui.Success("installed and started")
 		if note != "" {
-			fmt.Println(note)
+			ui.Info("%s", note)
 		}
 		return nil
 	},
@@ -89,10 +99,14 @@ var uninstallCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		if err := service.Uninstall(p); err != nil {
+		if !ui.Confirm("Remove the background service?", false) {
+			ui.Info("cancelled")
+			return nil
+		}
+		if err := ui.Spin("Removing service", func() error { return service.Uninstall(p) }); err != nil {
 			return err
 		}
-		fmt.Println("uninstalled")
+		ui.Success("uninstalled")
 		return nil
 	},
 }
@@ -109,7 +123,7 @@ func simpleServiceCmd(use, short string, fn func(service.Params) error) *cobra.C
 			if err := fn(p); err != nil {
 				return fmt.Errorf("%s failed: %w (is the service installed? run `mta install`)", use, err)
 			}
-			fmt.Println(use + ": ok")
+			ui.Success("%s: ok", use)
 			return nil
 		},
 	}

@@ -6,6 +6,32 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-24
+
+### Added
+- **Confirmation prompts** on destructive/state-changing commands (`uninstall`,
+  `self uninstall`, `upgrade`, `schedule clear`, `auth logout`, and `config init`
+  when the file exists), each with a safe default. New global flags `--yes/-y`
+  (assume yes), `--no-input` (never prompt; use defaults), and `--no-color`.
+- **Spinners** for long operations (`upgrade`, service install/uninstall) and a
+  **download progress bar** (rate + ETA) in `scripts/install.sh` on a terminal.
+- Consistent status output with `[OK]/[i]/[WARN]/[FAIL]` icons; color is disabled
+  for `NO_COLOR`, `TERM=dumb`, `--no-color`, and non-terminals.
+- `docs/cli.md` documenting CLI conventions (streams, flags, prompts, color,
+  exit codes, env vars), linked from the README docs index.
+
+### Changed
+- Human status/notes now go to **stderr**; stdout is reserved for primary/`--json`
+  output so piping stays clean.
+
+### Fixed
+- `--scope` now **rejects** invalid values instead of silently falling back to
+  `user`.
+- `on`/`off --for` rejects zero/negative durations (previously created an
+  already-expired override).
+- Confirmation prompts no longer block when stdin is not a terminal (used the
+  default instead of hanging).
+
 ## [0.2.3] - 2026-06-24
 
 ### Added
@@ -127,7 +153,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `doctor`, `version`) and a Bubble Tea TUI dashboard.
 - `doctor` diagnostics for permissions, capabilities, and configuration.
 
-[Unreleased]: https://github.com/simtabi/ms-teams-activity/compare/v0.2.3...HEAD
+[Unreleased]: https://github.com/simtabi/ms-teams-activity/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/simtabi/ms-teams-activity/releases/tag/v0.3.0
 [0.2.3]: https://github.com/simtabi/ms-teams-activity/releases/tag/v0.2.3
 [0.2.2]: https://github.com/simtabi/ms-teams-activity/releases/tag/v0.2.2
 [0.2.1]: https://github.com/simtabi/ms-teams-activity/releases/tag/v0.2.1
