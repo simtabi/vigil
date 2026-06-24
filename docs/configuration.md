@@ -60,7 +60,8 @@ mta schedule clear
     "interval_seconds": 60,          // pulse cadence; must be in [5,300)
     "jitter_seconds": 25,            // +/- randomization for natural cadence
     "method": "mouse",              // "mouse" (real small move) | "key" (F15) | "zen"
-    "prevent_sleep": true            // hold a sleep/display assertion while active
+    "prevent_sleep": true,           // hold a sleep/display assertion while active
+    "move_pixels": 3                 // max nudge magnitude; each tick uses 1..N px, random axis
   },
   "graph": {
     "tenant_id": "common",           // "common" | "organizations" | tenant GUID
@@ -97,5 +98,17 @@ mta resume             # clear the override, follow the schedule again
 
 The config is hot-reloaded; edits and overrides take effect within ~1 second
 without restarting the service.
+
+### Running & debugging
+
+```bash
+mta run --dry-run      # run the loop but only log intended actions (no input/Graph)
+mta run --verbose      # debug-level logging
+mta status             # current daemon + service state (add --json for scripts)
+mta doctor             # capability/permission/Graph diagnostics
+```
+
+`--dry-run` is the easiest way to watch how the schedule and overrides resolve
+without actually moving the mouse or touching presence.
 
 [← Docs index](../README.md#documentation)

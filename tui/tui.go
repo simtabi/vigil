@@ -59,8 +59,6 @@ type model struct {
 	cfgErr error
 	logs   []string
 	flash  string
-	width  int
-	height int
 	mode   viewMode
 	update selfupdate.Info
 
@@ -125,7 +123,7 @@ func (m model) execSelf(args ...string) tea.Cmd {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.width, m.height = msg.Width, msg.Height
+		// no layout state needed; views are width-agnostic
 	case updateMsg:
 		m.update = msg.info
 		return m, nil

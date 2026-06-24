@@ -17,6 +17,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   remove/clear`.
 - Full TUI hub: first-run onboarding, settings editor, schedule editor,
   service/auth/update actions, and an update-available banner.
+- Natural, non-repetitive input: randomized 1..`input.move_pixels` offset on a
+  random axis plus jittered timing.
+- `mta run --dry-run` (log intended actions only) and global `--verbose` logging.
+- `doctor` performs a live Graph presence read to verify token + admin consent;
+  Graph `availability`/`activity` values are validated.
+- Engine-loop unit tests and a `golangci-lint` config + CI lint job.
 
 ### Changed
 - Entry point moved to `./cmd/mta` so `go install …/cmd/mta@latest` produces a

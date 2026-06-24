@@ -12,6 +12,7 @@ go build ./...            # build everything (current OS)
 go test ./...             # run tests
 go vet ./...              # static checks
 gofmt -l .                # formatting (should print nothing)
+golangci-lint run ./...   # linters (config in .golangci.yml)
 ```
 
 Cross-platform compile check (no cgo needed for these targets):
