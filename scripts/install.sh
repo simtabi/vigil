@@ -1,37 +1,57 @@
 #!/usr/bin/env bash
-# Build mta from source and install it on macOS/Linux.
+# Install mta on macOS/Linux by downloading the latest prebuilt release and
+# verifying its SHA-256. Falls back to building from source if Go is present.
 #
-#   ./scripts/install.sh            # install to ~/.local/bin (no sudo)
-#   sudo ./scripts/install.sh       # install to /usr/local/bin (all users)
-set -euo pipefail
+#   curl -fsSL https://raw.githubusercontent.com/simtabi/ms-teams-activity/main/scripts/install.sh | sh
+#   ./scripts/install.sh            # to ~/.local/bin
+#   sudo ./scripts/install.sh       # to /usr/local/bin
+set -eu
 
-cd "$(dirname "$0")/.."
+REPO="simtabi/ms-teams-activity"
+BASE="https://github.com/${REPO}/releases/latest/download"
 
-if ! command -v go >/dev/null 2>&1; then
-  echo "error: Go is required (https://go.dev/dl). Install Go >= 1.23 and retry." >&2
-  exit 1
-fi
+os=$(uname -s | tr '[:upper:]' '[:lower:]')
+arch=$(uname -m)
+case "$arch" in
+  x86_64 | amd64) arch=amd64 ;;
+  arm64 | aarch64) arch=arm64 ;;
+  *) echo "unsupported arch: $arch" >&2; exit 1 ;;
+esac
+case "$os" in darwin | linux) ;; *) echo "unsupported os: $os" >&2; exit 1 ;; esac
 
-if [ "$(id -u)" -eq 0 ]; then
-  PREFIX="${PREFIX:-/usr/local/bin}"
-else
-  PREFIX="${PREFIX:-$HOME/.local/bin}"
-fi
+if [ "$(id -u)" = "0" ]; then PREFIX="${PREFIX:-/usr/local/bin}"; else PREFIX="${PREFIX:-$HOME/.local/bin}"; fi
 mkdir -p "$PREFIX"
 
-echo "Building mta..."
-go build -trimpath -o "$PREFIX/mta" .
+sha_check() { # file expected
+  if command -v sha256sum >/dev/null 2>&1; then echo "$2  $1" | sha256sum -c - >/dev/null
+  else echo "$2  $1" | shasum -a 256 -c - >/dev/null; fi
+}
 
-echo "Installed: $PREFIX/mta"
-case ":$PATH:" in
-  *":$PREFIX:"*) ;;
-  *) echo "note: add $PREFIX to your PATH (e.g. in ~/.profile or ~/.zshrc)";;
-esac
+asset="mta_${os}_${arch}.tar.gz"
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
 
+echo "Downloading ${asset}..."
+if curl -fsSL "${BASE}/${asset}" -o "${tmp}/${asset}" && curl -fsSL "${BASE}/checksums.txt" -o "${tmp}/checksums.txt"; then
+  want=$(grep " ${asset}\$" "${tmp}/checksums.txt" | awk '{print $1}' | head -1)
+  if [ -z "$want" ]; then echo "checksum for ${asset} not found" >&2; exit 1; fi
+  echo "Verifying checksum..."
+  sha_check "${tmp}/${asset}" "$want"
+  tar -C "$tmp" -xzf "${tmp}/${asset}"
+  install -m 0755 "${tmp}/mta" "${PREFIX}/mta"
+  echo "Installed: ${PREFIX}/mta"
+else
+  echo "Download failed; trying to build from source..." >&2
+  command -v go >/dev/null 2>&1 || { echo "Go not found and download failed." >&2; exit 1; }
+  GOBIN="$PREFIX" go install "github.com/${REPO}/cmd/mta@latest"
+  echo "Installed (from source): ${PREFIX}/mta"
+fi
+
+case ":$PATH:" in *":$PREFIX:"*) ;; *) echo "note: add $PREFIX to your PATH";; esac
 cat <<'EOF'
 
 Next steps:
-  mta config init      # write the default config
+  mta config init      # or `mta config wizard` for guided setup
   mta doctor           # check capabilities & permissions
-  mta install          # install + start the background service (use --scope user for input)
+  mta install          # install + start the background service
 EOF

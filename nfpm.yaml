@@ -1,0 +1,17 @@
+# nfpm config for deb/rpm packages. ARCH/VERSION/GOARCH are supplied via the
+# environment by the release workflow (nfpm expands ${VAR}).
+name: mta
+arch: ${ARCH}
+platform: linux
+version: ${VERSION}
+section: utils
+priority: optional
+maintainer: "Imani Manyara <imani@simtabi.com>"
+description: |
+  Keep Microsoft Teams active on a configurable schedule.
+vendor: Simtabi LLC
+homepage: https://opensource.simtabi.com/products/ms-teams-activity
+license: MIT
+contents:
+  - src: ./dist/mta_linux_${GOARCH}/mta
+    dst: /usr/bin/mta
