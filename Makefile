@@ -1,12 +1,13 @@
 BINARY := mta
 PKG := github.com/simtabi/ms-teams-activity
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
-LDFLAGS := -s -w -X $(PKG)/cmd.version=$(VERSION)
+LDFLAGS := -s -w -X $(PKG)/internal/cli.version=$(VERSION)
+MAIN := ./cmd/mta
 
 .PHONY: build test vet fmt lint cross install clean
 
 build: ## Build the binary for the current OS
-	go build -trimpath -ldflags "$(LDFLAGS)" -o $(BINARY) .
+	go build -trimpath -ldflags "$(LDFLAGS)" -o $(BINARY) $(MAIN)
 
 test: ## Run tests with the race detector
 	go test -race ./...

@@ -1,5 +1,5 @@
 // Package cmd implements the mta command-line interface.
-package cmd
+package cli
 
 import (
 	"fmt"
