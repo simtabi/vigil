@@ -24,9 +24,25 @@ The target list lives in **`build/targets.txt`** and the build/bundle logic in
 **`scripts/build-all.sh`** — used identically by `make dist` (local) and CI, so
 there's one source of truth. Targets cover 64-bit, 32-bit (386/armv6/armv7),
 ARM64, RISC-V/ppc64le/s390x, Windows (incl. ARM64), macOS, and the BSDs.
-Archives are **`mta_<os>_<arch>.{tar.gz,zip}`** (arm uses `armv6`/`armv7`),
-version-less to keep the self-update contract stable. Linux mainstream arches
-also get **deb/rpm via `nfpm`** (`build/nfpm.yaml`).
+
+`make dist` produces a **flat** dist of ready-to-run binaries plus grouped
+archives:
+
+```
+dist/
+  mta_<os>_<arch>[.exe]      # flat, self-describing binaries (+ mta_darwin_universal)
+  checksums.txt              # sha256 over the flat binaries
+  archives/
+    mta_<os>_<arch>.tar.gz   # unix; the inner binary KEEPS the flat name
+    mta_windows_<arch>.zip   # windows; inner mta_windows_<arch>.exe
+    mta_<arch>.deb / .rpm     # nfpm (build/nfpm.yaml)
+    checksums.txt            # sha256 over archives/packages
+```
+
+Archive names are **version-less** (`mta_<os>_<arch>.{tar.gz,zip}`) to keep the
+self-update contract stable. macOS ships a **universal** binary
+(`mta_darwin_universal`, Apple Silicon + Intel). GitHub release assets = the
+contents of `dist/archives/`.
 
 ```bash
 make dist          # build + bundle everything the local toolchain supports
@@ -53,9 +69,11 @@ make dist          # build + bundle everything the local toolchain supports
 ## Self-update contract
 
 `internal/selfupdate` downloads `mta_<os>_<arch>.<ext>` and validates it against
-`checksums.txt`. Keep these aligned: the archive name template, the inner binary
-name (`mta`/`mta.exe`), `checksums.txt`, and `vX.Y.Z` tags. Changing one side
-means changing both.
+`checksums.txt`. The inner binary keeps the **flat** name
+(`mta_<os>_<arch>[.exe]`), which `go-selfupdate`'s `matchExecutableName` accepts
+(`^cmd([_-]v?semver)?([_-]os[_-]arch)?(\.exe)?$`). Keep these aligned: the
+archive name, the flat inner-binary name, **bare-filename** `checksums.txt`, and
+`vX.Y.Z` tags. Changing one side means changing both.
 
 ## First-release prerequisites
 

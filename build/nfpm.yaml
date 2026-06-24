@@ -13,5 +13,5 @@ vendor: Simtabi LLC
 homepage: https://opensource.simtabi.com/products/ms-teams-activity
 license: MIT
 contents:
-  - src: ./dist/mta_linux_${GOARCH}/mta
+  - src: ./dist/mta_linux_${GOARCH}
     dst: /usr/bin/mta

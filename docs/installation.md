@@ -23,11 +23,21 @@ download fails and Go is present.
 ## Building all targets yourself
 
 `make dist` (or `./scripts/build-all.sh [version]`) builds ready-to-run binaries
-for every target in `build/targets.txt` into `./dist/` with archives, deb/rpm
-(if `nfpm` is installed), and `checksums.txt`. It builds whatever your local
-toolchain supports (macOS targets need a C compiler; everything else is pure-Go
-cross-compilation). CI runs the same script on every push to `main`, so prebuilt
-binaries are always downloadable from the latest run's Artifacts.
+for every target in `build/targets.txt`. The output is **flat** — each binary is
+a self-describing file you can run directly — with compressed archives + deb/rpm
+grouped under `dist/archives/`:
+
+```
+dist/
+  mta_darwin_arm64   mta_linux_amd64   mta_windows_amd64.exe   mta_darwin_universal   …
+  checksums.txt
+  archives/  mta_<os>_<arch>.tar.gz · mta_windows_<arch>.zip · *.deb · *.rpm · checksums.txt
+```
+
+It builds whatever your local toolchain supports (macOS targets need a C
+compiler; everything else is pure-Go cross-compilation). CI runs the same script
+on every push to `main`, so prebuilt binaries are always downloadable from the
+latest run's Artifacts.
 
 ## Putting the binary on PATH
 

@@ -95,7 +95,8 @@ jobs:
               on_intel { url "${base}/mta_linux_amd64.tar.gz"; sha256 "$(sha mta_linux_amd64.tar.gz)" }
             end
             def install
-              bin.install "mta"
+              # archives contain a flat-named binary (mta_<os>_<arch>); install it as mta
+              bin.install Dir["mta_*"].first => "mta"
             end
             test do
               system "#{bin}/mta", "version"
@@ -112,9 +113,9 @@ jobs:
             "homepage": "https://opensource.simtabi.com/products/ms-teams-activity",
             "license": "MIT",
             "architecture": {
-              "64bit": { "url": "${base}/mta_windows_amd64.zip", "hash": "$(sha mta_windows_amd64.zip)", "bin": "mta.exe" },
-              "32bit": { "url": "${base}/mta_windows_386.zip", "hash": "$(sha mta_windows_386.zip)", "bin": "mta.exe" },
-              "arm64": { "url": "${base}/mta_windows_arm64.zip", "hash": "$(sha mta_windows_arm64.zip)", "bin": "mta.exe" }
+              "64bit": { "url": "${base}/mta_windows_amd64.zip", "hash": "$(sha mta_windows_amd64.zip)", "bin": [["mta_windows_amd64.exe", "mta"]] },
+              "32bit": { "url": "${base}/mta_windows_386.zip", "hash": "$(sha mta_windows_386.zip)", "bin": [["mta_windows_386.exe", "mta"]] },
+              "arm64": { "url": "${base}/mta_windows_arm64.zip", "hash": "$(sha mta_windows_arm64.zip)", "bin": [["mta_windows_arm64.exe", "mta"]] }
             }
           }
           EOF

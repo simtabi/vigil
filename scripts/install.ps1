@@ -26,7 +26,9 @@ try {
 
     Write-Host "Verifying checksum... OK"
     Expand-Archive -Path "$tmp\$asset" -DestinationPath $tmp -Force
-    Copy-Item "$tmp\mta.exe" (Join-Path $Prefix "mta.exe") -Force
+    # The zip contains a flat-named binary (mta_windows_<arch>.exe); install it as mta.exe.
+    $inner = $asset -replace '\.zip$', '.exe'
+    Copy-Item "$tmp\$inner" (Join-Path $Prefix "mta.exe") -Force
     Write-Host "Installed: $(Join-Path $Prefix 'mta.exe')"
 }
 catch {

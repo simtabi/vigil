@@ -6,6 +6,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-06-24
+
+### Changed
+- Flattened the build output: `dist/` now holds self-describing, ready-to-run
+  binaries (`mta_<os>_<arch>[.ext]`, plus `mta_darwin_universal`) with archives,
+  deb/rpm, and `checksums.txt` grouped under `dist/archives/`. Archive inner
+  binaries keep the flat name (self-update-compatible). Documented as the
+  canonical build/distribution layout for all Simtabi Go projects.
+
 ## [0.1.0] - 2026-06-24
 
 ### Added
@@ -49,5 +58,6 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `doctor`, `version`) and a Bubble Tea TUI dashboard.
 - `doctor` diagnostics for permissions, capabilities, and configuration.
 
-[Unreleased]: https://github.com/simtabi/ms-teams-activity/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/simtabi/ms-teams-activity/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/simtabi/ms-teams-activity/releases/tag/v0.1.1
 [0.1.0]: https://github.com/simtabi/ms-teams-activity/releases/tag/v0.1.0

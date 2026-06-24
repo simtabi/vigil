@@ -34,7 +34,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: dist-cross
-          path: out/*
+          path: dist/archives/*
           retention-days: 14
 
   mac:
@@ -53,5 +53,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: dist-darwin
-          path: out/*
+          path: dist/archives/*
           retention-days: 14

@@ -43,7 +43,8 @@ if curl -fsSL "${BASE}/${asset}" -o "${tmp}/${asset}" && curl -fsSL "${BASE}/che
   echo "Verifying checksum..."
   sha_check "${tmp}/${asset}" "$want"
   tar -C "$tmp" -xzf "${tmp}/${asset}"
-  install -m 0755 "${tmp}/mta" "${PREFIX}/mta"
+  # The archive contains a flat-named binary (e.g. mta_darwin_universal); install it as mta.
+  install -m 0755 "${tmp}/${asset%.tar.gz}" "${PREFIX}/mta"
   echo "Installed: ${PREFIX}/mta"
 else
   echo "Download failed; trying to build from source..." >&2
