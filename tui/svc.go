@@ -1,54 +1,43 @@
 package tui
 
-import (
-	"strings"
+import tea "github.com/charmbracelet/bubbletea"
 
-	tea "github.com/charmbracelet/bubbletea"
-)
-
-var serviceActions = []struct{ key, desc string }{
-	{"install", "install + start the background service"},
-	{"start", "start the service"},
-	{"stop", "stop the service"},
-	{"restart", "restart the service"},
-	{"uninstall", "stop + remove the service"},
+var serviceActions = []struct{ cmd, label, desc string }{
+	{"install", "Install", "Install + start the background service"},
+	{"start", "Start", "Start the installed service"},
+	{"stop", "Stop", "Stop the service"},
+	{"restart", "Restart", "Restart the service"},
+	{"uninstall", "Uninstall", "Stop + remove the service"},
+	{"", "Back", ""},
 }
 
 func (m model) updateService(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
-	case "esc", "q":
-		m.mode = modeDashboard
+	case "esc":
+		m.screen = screenMenu
 	case "up", "k":
-		if m.svcRow > 0 {
-			m.svcRow--
-		}
+		m.subCursor = moveCursor(m.subCursor, len(serviceActions), -1)
 	case "down", "j":
-		if m.svcRow < len(serviceActions)-1 {
-			m.svcRow++
+		m.subCursor = moveCursor(m.subCursor, len(serviceActions), +1)
+	case "enter", "right", "l":
+		a := serviceActions[m.subCursor]
+		m.screen = screenMenu
+		if a.cmd == "" {
+			return m, nil
 		}
-	case "enter":
-		action := serviceActions[m.svcRow].key
-		m.mode = modeDashboard
-		m.flash = "ran service " + action
-		return m, m.execSelf(action)
+		m.flash = "ran service " + a.cmd
+		return m, m.execSelf(a.cmd)
 	}
 	return m, nil
 }
 
-func (m model) serviceView() string {
-	var b strings.Builder
-	b.WriteString(titleStyle.Render("  Service actions") + "\n\n")
-	var lines []string
+func (m model) serviceBody() string {
+	labels := make([]string, len(serviceActions))
 	for i, a := range serviceActions {
-		cursor := "  "
-		row := a.key + helpStyle.Render("  — "+a.desc)
-		if i == m.svcRow {
-			cursor = selRowStyle.Render("▸ ")
-			row = selRowStyle.Render(a.key) + helpStyle.Render("  — "+a.desc)
+		labels[i] = a.label
+		if a.desc != "" {
+			labels[i] += "  " + helpStyle.Render(a.desc)
 		}
-		lines = append(lines, cursor+row)
 	}
-	b.WriteString(boxStyle.Render(strings.Join(lines, "\n")) + "\n")
-	b.WriteString(helpStyle.Render("[↑/↓] choose  [enter] run  [esc] back"))
-	return b.String()
+	return listView(labels, m.subCursor)
 }

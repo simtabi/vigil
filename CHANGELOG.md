@@ -6,6 +6,21 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-06-24
+
+### Changed
+- Redesigned the TUI around a **navigable main menu** (↑/↓ or j/k, Enter to
+  select, Esc to go back) with Status / Override / Schedule / Settings / Service /
+  Account / Check-for-updates / Help screens and a live status strip — far more
+  discoverable than the old single-key dashboard. Override, Service, and Account
+  are now submenus.
+
+### Added
+- Comprehensive deterministic TUI model tests (menu navigation + clamping, screen
+  transitions, Esc-back, override file writes, schedule/settings editors incl. the
+  `graph`-without-`client_id` validation path, onboarding, and view smoke for
+  every screen).
+
 ## [0.2.0] - 2026-06-24
 
 ### Changed
@@ -88,7 +103,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `doctor`, `version`) and a Bubble Tea TUI dashboard.
 - `doctor` diagnostics for permissions, capabilities, and configuration.
 
-[Unreleased]: https://github.com/simtabi/ms-teams-activity/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/simtabi/ms-teams-activity/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/simtabi/ms-teams-activity/releases/tag/v0.2.1
 [0.2.0]: https://github.com/simtabi/ms-teams-activity/releases/tag/v0.2.0
 [0.1.3]: https://github.com/simtabi/ms-teams-activity/releases/tag/v0.1.3
 [0.1.2]: https://github.com/simtabi/ms-teams-activity/releases/tag/v0.1.2

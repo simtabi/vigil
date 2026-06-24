@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/simtabi/ms-teams-activity/internal/config"
 )
 
@@ -27,7 +26,7 @@ func (m *model) enterEditor() {
 		return
 	}
 	m.edit = cfg
-	m.mode = modeEditor
+	m.screen = screenSchedule
 	m.winIdx = 0
 	m.field = fieldDays
 	m.flash = ""
@@ -37,7 +36,7 @@ func (m model) updateEditor(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	wins := &m.edit.Schedule.Windows
 	switch msg.String() {
 	case "esc":
-		m.mode = modeDashboard
+		m.screen = screenMenu
 		m.flash = "edit cancelled"
 	case "s":
 		if err := m.edit.Validate(); err != nil {
@@ -48,7 +47,7 @@ func (m model) updateEditor(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.flash = "save failed: " + err.Error()
 			break
 		}
-		m.mode = modeDashboard
+		m.screen = screenMenu
 		m.flash = "schedule saved"
 		m.refresh()
 	case "up", "k":
@@ -131,13 +130,6 @@ func (m *model) toggleDay(idx int) {
 		return slices.Index(dayOrder, a) - slices.Index(dayOrder, b)
 	})
 }
-
-var (
-	selRowStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("63")).Bold(true)
-	selFieldStyle = lipgloss.NewStyle().Background(lipgloss.Color("63")).Foreground(lipgloss.Color("231"))
-	dayOnStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Bold(true)
-	dayOffStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
-)
 
 func (m model) editorView() string {
 	var b strings.Builder

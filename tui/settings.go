@@ -30,7 +30,7 @@ func (m *model) enterSettings() {
 		return
 	}
 	m.edit = cfg
-	m.mode = modeSettings
+	m.screen = screenSettings
 	m.setRow = 0
 	m.setEditing = false
 	m.flash = ""
@@ -56,7 +56,7 @@ func (m model) updateSettings(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	switch msg.String() {
 	case "esc":
-		m.mode = modeDashboard
+		m.screen = screenMenu
 		m.flash = "settings closed (unsaved changes discarded)"
 	case "s":
 		if err := m.edit.Validate(); err != nil {
@@ -67,7 +67,7 @@ func (m model) updateSettings(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.flash = "save failed: " + err.Error()
 			return m, nil
 		}
-		m.mode = modeDashboard
+		m.screen = screenMenu
 		m.flash = "settings saved"
 		m.refresh()
 	case "up", "k":
