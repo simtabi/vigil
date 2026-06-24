@@ -1,6 +1,7 @@
 # Binaries
 /mta
 /dist/
+/out/
 *.exe
 *.dll
 *.so

@@ -1,0 +1,34 @@
+# Single source of truth for release targets, read by both scripts/build-all.sh
+# and .github/workflows/build-binaries.yml. Columns: GOOS GOARCH [GOARM]
+# (GOARM only applies to GOARCH=arm). darwin targets build with cgo on macOS
+# runners; everything else cross-compiles CGO-free from any host.
+#
+# Coverage: 64-bit, 32-bit (386/armv6/armv7), ARM (arm64/armv7/armv6), plus
+# Windows, Linux, macOS, and the BSD unixes.
+
+# --- Linux ---
+linux amd64
+linux 386
+linux arm64
+linux arm 7
+linux arm 6
+linux riscv64
+linux ppc64le
+linux s390x
+
+# --- Windows ---
+windows amd64
+windows 386
+windows arm64
+
+# --- macOS (cgo) ---
+darwin amd64
+darwin arm64
+
+# --- BSD unixes ---
+freebsd amd64
+freebsd 386
+freebsd arm64
+openbsd amd64
+openbsd arm64
+netbsd amd64

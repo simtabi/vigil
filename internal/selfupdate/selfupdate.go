@@ -8,6 +8,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/creativeprojects/go-selfupdate"
 )
@@ -26,8 +27,12 @@ type Info struct {
 	Notes     string
 }
 
-// IsDev reports whether a version string is an unreleased/dev build.
-func IsDev(v string) bool { return v == "" || v == "dev" }
+// IsDev reports whether a version string is an unreleased build (empty, "dev",
+// or any snapshot/dev-tagged version like "0.0.0-dev+<sha>"). Self-update is
+// refused for these.
+func IsDev(v string) bool {
+	return v == "" || strings.Contains(v, "dev") || strings.Contains(v, "snapshot")
+}
 
 func repository() selfupdate.Repository { return selfupdate.ParseSlug(Slug) }
 

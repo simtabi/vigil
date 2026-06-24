@@ -41,7 +41,7 @@ func TestSelfUpdatableAndAdvice(t *testing.T) {
 }
 
 func TestIsDev(t *testing.T) {
-	for _, v := range []string{"", "dev"} {
+	for _, v := range []string{"", "dev", "dev-abc123", "0.0.0-dev+sha", "1.0.0-snapshot"} {
 		if !IsDev(v) {
 			t.Errorf("IsDev(%q) should be true", v)
 		}

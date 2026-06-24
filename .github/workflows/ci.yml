@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -68,3 +69,12 @@ jobs:
         run: go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
       - name: run
         run: "$(go env GOPATH)/bin/golangci-lint run ./..."
+
+  # Always bundle ready-to-run binaries for the latest main (and on demand),
+  # downloadable from the run's Artifacts even before a tagged release.
+  snapshot:
+    name: snapshot binaries
+    if: github.event_name != 'pull_request'
+    uses: ./.github/workflows/build-binaries.yml
+    with:
+      version: 0.0.0-dev+${{ github.sha }}
