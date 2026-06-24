@@ -1,0 +1,25 @@
+# Binaries
+/mta
+/dist/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test / coverage
+*.test
+*.out
+coverage.*
+
+# Go workspace
+go.work
+go.work.sum
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Local runtime artifacts
+*.log
+/tmp/
