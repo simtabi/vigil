@@ -31,7 +31,7 @@ jobs:
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - name: build + bundle
         run: VIGIL_SCOPE=cross VIGIL_PACKAGES=1 VIGIL_CHECKSUMS=0 ./scripts/build-all.sh "${{ inputs.version }}"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dist-cross
           path: dist/archives/*
@@ -50,7 +50,7 @@ jobs:
           check-latest: true
       - name: build + bundle (arm64 + amd64 + universal)
         run: VIGIL_SCOPE=darwin VIGIL_CHECKSUMS=0 ./scripts/build-all.sh "${{ inputs.version }}"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dist-darwin
           path: dist/archives/*
