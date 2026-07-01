@@ -20,8 +20,8 @@ jobs:
     name: linux / windows / bsd (cross)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
           go-version: '1.23'
           check-latest: true
@@ -31,7 +31,7 @@ jobs:
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - name: build + bundle
         run: VIGIL_SCOPE=cross VIGIL_PACKAGES=1 VIGIL_CHECKSUMS=0 ./scripts/build-all.sh "${{ inputs.version }}"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: dist-cross
           path: dist/archives/*
@@ -43,14 +43,14 @@ jobs:
     # clang, then lipo-merges a universal binary — no separate Intel runner.
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
           go-version: '1.23'
           check-latest: true
       - name: build + bundle (arm64 + amd64 + universal)
         run: VIGIL_SCOPE=darwin VIGIL_CHECKSUMS=0 ./scripts/build-all.sh "${{ inputs.version }}"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: dist-darwin
           path: dist/archives/*
