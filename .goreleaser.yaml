@@ -1,0 +1,198 @@
+version: 2
+project_name: vigil
+
+# Keep all build tooling under a single build/ folder: inputs (targets.txt,
+# nfpm.yaml) at build/ root, generated artifacts under build/dist/ (gitignored).
+dist: build/dist
+
+before:
+  hooks:
+    - go mod tidy
+
+# One binary cross-compiled to the full OS/arch matrix (matching build/targets.txt
+# and scripts/build-all.sh). Every non-darwin target is a static, CGO-free binary
+# (CGO_ENABLED=0). darwin is the exception: the input engine
+# (internal/activity/input_darwin.go) links CoreGraphics/IOKit via cgo, so the two
+# darwin targets build with CGO_ENABLED=1 — which is why this release runs on a
+# macOS runner (see .github/workflows/release.yml). -trimpath makes builds
+# reproducible and -s -w strips debug info for smaller artifacts.
+builds:
+  - id: vigil
+    main: ./cmd/vigil
+    binary: vigil
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    # Explicit target list — the single source of truth mirrored from
+    # build/targets.txt: 64-bit, 32-bit (386/armv6/armv7), ARM64, riscv64,
+    # ppc64le, s390x, the BSDs, and macOS/Windows/Linux.
+    targets:
+      - linux_amd64
+      - linux_386
+      - linux_arm64
+      - linux_arm_6
+      - linux_arm_7
+      - linux_riscv64
+      - linux_ppc64le
+      - linux_s390x
+      - windows_amd64
+      - windows_386
+      - windows_arm64
+      - darwin_amd64
+      - darwin_arm64
+      - freebsd_amd64
+      - freebsd_386
+      - freebsd_arm64
+      - openbsd_amd64
+      - openbsd_arm64
+      - netbsd_amd64
+    # darwin needs cgo + the macOS SDK (Apple frameworks). On the arm64 macOS
+    # runner, arm64 builds natively and amd64 cross-builds via clang's -arch.
+    overrides:
+      - goos: darwin
+        goarch: arm64
+        env:
+          - CGO_ENABLED=1
+      - goos: darwin
+        goarch: amd64
+        env:
+          - CGO_ENABLED=1
+          - CC=clang -arch x86_64
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    ldflags:
+      - -s -w
+      - -X github.com/simtabi/vigil/internal/cli.version={{ .Version }}
+      - -X github.com/simtabi/vigil/internal/cli.commit={{ .Commit }}
+      - -X github.com/simtabi/vigil/internal/cli.date={{ .CommitDate }}
+
+# A single macOS universal binary (amd64 + arm64) alongside the per-arch ones.
+universal_binaries:
+  - id: vigil
+    ids: [vigil]
+    name_template: vigil
+    replace: false
+
+# All artifacts use one flat, versionless, Go-style naming scheme:
+#   vigil_<os>_<arch>[.ext]  with darwin → macos, e.g.
+#   vigil_macos_arm64, vigil_linux_amd64, vigil_windows_386.exe,
+#   vigil_macos_universal, vigil_linux_armv7.
+# The release tag carries the version. install scripts reconstruct these names.
+archives:
+  - id: binary
+    ids: [vigil]
+    formats: [binary]
+    name_template: &name >-
+      vigil_{{- if eq .Os "darwin" }}macos{{ else }}{{ .Os }}{{ end }}_
+      {{- if eq .Arch "all" }}universal{{ else if eq .Arch "arm" }}armv{{ .Arm }}{{ else }}{{ .Arch }}{{ end }}
+
+  - id: archive
+    ids: [vigil]
+    name_template: *name
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - LICENSE
+      - README.md
+      - CHANGELOG.md
+
+# Native Linux packages (nfpm operates on the Linux builds only).
+nfpms:
+  - id: vigil
+    ids: [vigil]
+    package_name: vigil
+    vendor: Simtabi LLC
+    homepage: "https://opensource.simtabi.com/products/vigil"
+    maintainer: "Imani Manyara <imani@simtabi.com>"
+    description: "Keep Microsoft Teams active on a configurable schedule."
+    license: MIT
+    formats: [deb, rpm, apk]
+    bindir: /usr/bin
+    file_name_template: 'vigil_linux_{{ if eq .Arch "arm" }}armv{{ .Arm }}{{ else }}{{ .Arch }}{{ end }}'
+
+checksum:
+  name_template: "checksums.txt"
+  algorithm: sha256
+
+# Reproducible source tarball, uploaded as a first-class release asset next to
+# GitHub's auto-generated "Source code" links, so every release ships the exact
+# code as well as the binaries.
+source:
+  enabled: true
+  name_template: "{{ .ProjectName }}_{{ .Version }}_source"
+
+# One SBOM per archive (syft, SPDX-JSON), attached as release assets so
+# consumers can audit the supply chain of what they download.
+sboms:
+  - id: archive
+    artifacts: archive
+
+homebrew_casks:
+  - name: vigil
+    ids: [archive]
+    repository:
+      owner: simtabi
+      name: homebrew-tap
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+    directory: Casks
+    homepage: "https://opensource.simtabi.com/products/vigil"
+    description: "Keep Microsoft Teams active on a configurable schedule."
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr",
+              args: ["-dr", "com.apple.quarantine", "#{staged_path}/vigil"],
+              sudo: false
+          end
+
+scoops:
+  - name: vigil
+    ids: [archive]
+    repository:
+      owner: simtabi
+      name: scoop-bucket
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+    directory: bucket
+    homepage: "https://opensource.simtabi.com/products/vigil"
+    description: "Keep Microsoft Teams active on a configurable schedule."
+    license: MIT
+    skip_upload: '{{ envOrDefault "SKIP_WINDOWS_PKGS" "true" }}'
+
+# Winget (Microsoft's default Windows package manager). Publishes a manifest to
+# a simtabi/winget-pkgs fork and opens a PR to microsoft/winget-pkgs. Package id
+# is Simtabi.vigil. Gated behind SKIP_WINDOWS_PKGS until the fork exists.
+winget:
+  - name: vigil
+    publisher: Simtabi
+    ids: [archive]
+    license: MIT
+    homepage: "https://opensource.simtabi.com/products/vigil"
+    short_description: "Keep Microsoft Teams active on a configurable schedule."
+    description: "Keep Microsoft Teams active on a configurable schedule."
+    publisher_url: "https://simtabi.com"
+    release_notes_url: "https://github.com/simtabi/vigil/releases/tag/{{ .Tag }}"
+    repository:
+      owner: simtabi
+      name: winget-pkgs
+      branch: "vigil-{{ .Version }}"
+      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
+      pull_request:
+        enabled: true
+        draft: false
+        base:
+          owner: microsoft
+          name: winget-pkgs
+          branch: master
+    skip_upload: '{{ envOrDefault "SKIP_WINDOWS_PKGS" "true" }}'
+
+release:
+  github:
+    owner: simtabi
+    name: vigil
+  draft: false
+  prerelease: auto
+
+changelog:
+  disable: true # release body comes from CHANGELOG.md via --release-notes

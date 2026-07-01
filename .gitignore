@@ -1,6 +1,7 @@
 # Binaries
 /vigil
 /dist/
+/build/dist/
 /out/
 *.exe
 *.dll

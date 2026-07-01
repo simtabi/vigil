@@ -1,122 +1,68 @@
 name: Release
 
-# Automatic on every vX.Y.Z tag; also runnable on demand for a given tag.
+# Every release is tag-driven and publishes BOTH the source code and the
+# binaries: GoReleaser cross-compiles the full matrix, builds the archives,
+# packages, and a reproducible source tarball, generates SBOMs and checksums,
+# creates the GitHub Release (body from the tagged CHANGELOG section), and
+# updates the Homebrew/Scoop/Winget manifests. A build-provenance attestation is
+# then signed for every artifact via the checksums file.
 on:
   push:
-    tags: ['v*.*.*']
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: Existing tag to (re)build a release for, e.g. v0.1.0
-        required: true
-        type: string
+    tags: ["v*"]
+
+# Releases must never be cancelled mid-publish by a newer tag.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  build:
-    uses: ./.github/workflows/build-binaries.yml
-    with:
-      version: ${{ github.event.inputs.tag || github.ref_name }}
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
+  goreleaser:
+    # macOS, not Linux: vigil's input engine (internal/activity/input_darwin.go)
+    # links CoreGraphics/IOKit via cgo, so the darwin targets need the macOS SDK
+    # and can't be cross-compiled CGO-free. The arm64 runner builds darwin
+    # natively and cross-builds the CGO-free linux/windows/bsd matrix in one job.
+    runs-on: macos-latest
+    environment: release
+    timeout-minutes: 60
+    permissions:
+      contents: write # create the release and upload assets
+      id-token: write # keyless signing for the provenance attestation
+      attestations: write # write the build-provenance attestation
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
-          path: collected
-          merge-multiple: true
+          fetch-depth: 0 # full history + tags for GoReleaser
 
-      - name: Checksums + release notes
-        shell: bash
-        run: |
-          set -euo pipefail
-          TAG="${{ github.event.inputs.tag || github.ref_name }}"
-          # Bare filenames (no ./ prefix) so install scripts and self-update can
-          # look assets up by name.
-          cd collected && sha256sum vigil_* > checksums.txt && cd ..
-          VERSION="${TAG#v}"
-          awk -v ver="$VERSION" '
-            $0 ~ "^## \\[" ver "\\]" {grab=1; next}
-            grab && /^## \[/ {exit}
-            grab {print}
-          ' CHANGELOG.md > notes.md
-          [ -s notes.md ] || echo "See CHANGELOG.md." > notes.md
-
-      - name: Publish release
-        uses: softprops/action-gh-release@v2
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5
         with:
-          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
-          body_path: notes.md
-          generate_release_notes: true
-          files: collected/*
+          go-version-file: go.mod
+          cache: true
 
-  brew-scoop:
-    needs: release
-    runs-on: ubuntu-latest
-    continue-on-error: true # needs the tap/bucket repos + TAP_GITHUB_TOKEN
-    steps:
-      - uses: actions/download-artifact@v4
+      # syft powers GoReleaser's SBOM generation.
+      - uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610 # v0
+
+      - name: Extract CHANGELOG section for this tag
+        run: ./scripts/extract-changelog.sh "${GITHUB_REF_NAME}" > release_notes.md
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6
         with:
-          path: collected
-          merge-multiple: true
-      - name: Update Homebrew tap and Scoop bucket
+          version: latest
+          args: release --clean --release-notes=release_notes.md
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          [ -n "${TAP_GITHUB_TOKEN:-}" ] || { echo "no TAP_GITHUB_TOKEN; skipping"; exit 0; }
-          TAG="${{ github.event.inputs.tag || github.ref_name }}"
-          VERSION="${TAG#v}"
-          base="https://github.com/simtabi/vigil/releases/download/${TAG}"
-          sha() { sha256sum "collected/$1" | awk '{print $1}'; }
+          # Scoop/Winget publishing is skipped until the bucket/fork exist. Set
+          # repo variable SKIP_WINDOWS_PKGS to "false" to enable it.
+          SKIP_WINDOWS_PKGS: ${{ vars.SKIP_WINDOWS_PKGS || 'true' }}
 
-          git config --global user.email "imanimanyara@users.noreply.github.com"
-          git config --global user.name "Imani Manyara"
-
-          git clone "https://x:${TAP_GITHUB_TOKEN}@github.com/simtabi/homebrew-tap.git" tap
-          mkdir -p tap/Formula
-          cat > tap/Formula/vigil.rb <<EOF
-          class Vigil < Formula
-            desc "Keep Microsoft Teams active on a configurable schedule"
-            homepage "https://opensource.simtabi.com/products/vigil"
-            version "${VERSION}"
-            license "MIT"
-            on_macos do
-              on_arm { url "${base}/vigil_macos_arm64.tar.gz"; sha256 "$(sha vigil_macos_arm64.tar.gz)" }
-              on_intel { url "${base}/vigil_macos_amd64.tar.gz"; sha256 "$(sha vigil_macos_amd64.tar.gz)" }
-            end
-            on_linux do
-              on_arm { url "${base}/vigil_linux_arm64.tar.gz"; sha256 "$(sha vigil_linux_arm64.tar.gz)" }
-              on_intel { url "${base}/vigil_linux_amd64.tar.gz"; sha256 "$(sha vigil_linux_amd64.tar.gz)" }
-            end
-            def install
-              # archives contain a flat-named binary (vigil_<os>_<arch>); install it as vigil
-              bin.install Dir["vigil_*"].first => "vigil"
-            end
-            test do
-              system "#{bin}/vigil", "version"
-            end
-          end
-          EOF
-          (cd tap && git add -A && git commit -m "vigil ${VERSION}" && git push)
-
-          git clone "https://x:${TAP_GITHUB_TOKEN}@github.com/simtabi/scoop-bucket.git" bucket
-          cat > bucket/vigil.json <<EOF
-          {
-            "version": "${VERSION}",
-            "description": "Keep Microsoft Teams active on a configurable schedule",
-            "homepage": "https://opensource.simtabi.com/products/vigil",
-            "license": "MIT",
-            "architecture": {
-              "64bit": { "url": "${base}/vigil_windows_amd64.zip", "hash": "$(sha vigil_windows_amd64.zip)", "bin": [["vigil_windows_amd64.exe", "vigil"]] },
-              "32bit": { "url": "${base}/vigil_windows_386.zip", "hash": "$(sha vigil_windows_386.zip)", "bin": [["vigil_windows_386.exe", "vigil"]] },
-              "arm64": { "url": "${base}/vigil_windows_arm64.zip", "hash": "$(sha vigil_windows_arm64.zip)", "bin": [["vigil_windows_arm64.exe", "vigil"]] }
-            }
-          }
-          EOF
-          (cd bucket && git add -A && git commit -m "vigil ${VERSION}" && git push)
+      # Sign a build-provenance attestation for every released artifact. The
+      # checksums file lists them all, so `gh attestation verify <file>
+      # --repo <owner>/<repo>` works for any downloaded binary or archive.
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2
+        with:
+          subject-checksums: build/dist/checksums.txt
