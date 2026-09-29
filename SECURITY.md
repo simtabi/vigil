@@ -4,8 +4,7 @@
 
 The preferred channel is GitHub private vulnerability reporting: open a private report at <https://github.com/simtabi/vigil/security/advisories/new>. The report stays attached to the repository, with a draft advisory and a CVE request path. Email **security@simtabi.com** if you do not use GitHub.
 
-Please report security issues privately to **security@simtabi.com**. Do not
-open a public issue for security problems.
+Do not open a public issue for security problems.
 
 Include where possible: affected version/commit, platform, a description of the
 issue, and reproduction steps. We aim to acknowledge reports within a few
