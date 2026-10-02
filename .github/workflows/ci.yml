@@ -1,8 +1,6 @@
 name: CI
 
 on:
-  push:
-    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -70,11 +68,12 @@ jobs:
       - name: run
         run: "$(go env GOPATH)/bin/golangci-lint run ./..."
 
-  # Always bundle ready-to-run binaries for the latest main (and on demand),
-  # downloadable from the run's Artifacts even before a tagged release.
+  # Bundle ready-to-run binaries on every pull request (and on demand), so a
+  # reviewer can download and try the exact build from the run's Artifacts
+  # before merging, and long before a tagged release.
   snapshot:
     name: snapshot binaries
-    if: github.event_name != 'pull_request'
     uses: ./.github/workflows/build-binaries.yml
     with:
       version: 0.0.0-dev+${{ github.sha }}
+      artifact-prefix: snapshot-${{ github.event.pull_request.number || github.run_id }}
