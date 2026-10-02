@@ -2,7 +2,7 @@
 // the Windows binary icon. Kept separate so the main module's go.mod stays clean.
 module vigil-iconz
 
-go 1.23
+go 1.25.0
 
 require (
 	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c
@@ -13,6 +13,6 @@ require (
 require (
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646 // indirect
 	golang.org/x/image v0.12.0 // indirect
-	golang.org/x/net v0.6.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
 )
