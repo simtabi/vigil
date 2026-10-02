@@ -4,7 +4,7 @@ Thanks for your interest in improving `vigil`.
 
 ## Development
 
-Requirements: Go ≥ 1.23. The macOS build uses cgo (CoreGraphics/IOKit), so a C
+Requirements: Go ≥ 1.25. The macOS build uses cgo (CoreGraphics/IOKit), so a C
 toolchain is needed there; Windows and Linux builds are pure Go.
 
 ```bash
