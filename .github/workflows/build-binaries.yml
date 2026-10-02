@@ -11,6 +11,11 @@ on:
         description: Version stamped into binaries and archives.
         required: true
         type: string
+      artifact-prefix:
+        description: Prefix for the uploaded artifact names (<prefix>-cross, <prefix>-darwin).
+        required: false
+        type: string
+        default: dist
 
 permissions:
   contents: read
@@ -26,6 +31,11 @@ jobs:
           go-version-file: go.mod
           check-latest: true
       - name: install nfpm
+        # nfpm@latest can require a newer patch release than go.mod pins
+        # (v2.47.0 needs go >= 1.26.4), and setup-go sets GOTOOLCHAIN=local, so
+        # let go fetch the toolchain the tool asks for.
+        env:
+          GOTOOLCHAIN: auto
         run: |
           go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
@@ -33,7 +43,8 @@ jobs:
         run: VIGIL_SCOPE=cross VIGIL_PACKAGES=1 VIGIL_CHECKSUMS=0 ./scripts/build-all.sh "${{ inputs.version }}"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: dist-cross
+          name: ${{ inputs.artifact-prefix }}-cross
+          if-no-files-found: error
           path: dist/archives/*
           retention-days: 14
 
@@ -52,6 +63,7 @@ jobs:
         run: VIGIL_SCOPE=darwin VIGIL_CHECKSUMS=0 ./scripts/build-all.sh "${{ inputs.version }}"
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: dist-darwin
+          name: ${{ inputs.artifact-prefix }}-darwin
+          if-no-files-found: error
           path: dist/archives/*
           retention-days: 14
