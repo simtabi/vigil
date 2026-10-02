@@ -31,6 +31,11 @@ jobs:
           go-version-file: go.mod
           check-latest: true
       - name: install nfpm
+        # nfpm@latest can require a newer patch release than go.mod pins
+        # (v2.47.0 needs go >= 1.26.4), and setup-go sets GOTOOLCHAIN=local, so
+        # let go fetch the toolchain the tool asks for.
+        env:
+          GOTOOLCHAIN: auto
         run: |
           go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
           echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
