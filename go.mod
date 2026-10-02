@@ -1,6 +1,6 @@
 module github.com/simtabi/vigil
 
-go 1.25.0
+go 1.26.0
 
 require (
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.9.0
@@ -14,7 +14,7 @@ require (
 	github.com/gofrs/flock v0.13.1
 	github.com/kardianos/service v1.2.4
 	github.com/spf13/cobra v1.10.2
-	golang.org/x/sys v0.47.0
+	golang.org/x/sys v0.48.0
 	golang.org/x/term v0.44.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
