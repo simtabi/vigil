@@ -101,6 +101,34 @@ The **input** engine must be installed with `--scope user` (default, GUI
 session); a system-wide service (`--scope system`) is intended for the `graph`
 engine.
 
+## Quick start guide and usage
+
+### Getting started
+
+1. Write a config: `vigil config wizard` (guided: engine, tz, schedule, graph) or
+   `vigil config init` (defaults, Mon–Fri 08:00–17:00).
+2. Check the platform: `vigil doctor` reports capabilities and permissions.
+3. Install and start the background service: `vigil install`
+   (`vigil install --init` writes a default config first if none exists).
+
+The `graph` engine also needs `graph.client_id` set before `engine` can be
+switched to `graph` or `both`; see [tools/graph-engine.md](docs/tools/graph-engine.md).
+
+### Usage
+
+```bash
+vigil on --for 2h        # at-will override; or `vigil off`, `vigil resume`
+vigil status             # service + daemon state
+vigil                    # open the TUI dashboard
+```
+
+```bash
+vigil schedule add --days Mon,Tue,Wed,Thu,Fri --start 08:00 --end 17:00
+vigil config set engine both
+```
+
+The full configuration walkthrough is in [docs/configuration.md](docs/configuration.md); service control is under [The daemon](#the-daemon), and everything else is in the [documentation table](#documentation).
+
 ## Updating
 
 ```bash
