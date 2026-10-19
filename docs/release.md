@@ -102,8 +102,9 @@ archive name, the flat inner-binary name, **bare-filename** `checksums.txt`, and
 
 1. Make the repo public.
 2. Create `simtabi/homebrew-tap` and `simtabi/scoop-bucket` repositories.
-3. Add a repo secret **`TAP_GITHUB_TOKEN`** (a repo-scoped PAT that can push to
-   those two repos).
+3. Add the write deploy keys `HOMEBREW_TAP_DEPLOY_KEY` (on `simtabi/homebrew-tap`) and `SCOOP_BUCKET_DEPLOY_KEY` (on `simtabi/scoop-bucket`), each a repository secret that reaches its one repository and nothing else (the deploy-key guide in
+   `imanimanyara/github-apps` `docs/operations.md`). `TAP_GITHUB_TOKEN` is only
+   a fallback, and the Winget pull request's token.
 4. Push the first `vX.Y.Z` tag.
 
 Every release carries a real, human-readable description sourced from the
