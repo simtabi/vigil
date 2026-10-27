@@ -210,4 +210,9 @@ release:
   prerelease: auto
 
 changelog:
-  disable: true # release body comes from CHANGELOG.md via --release-notes
+  # Do not set disable: true. GoReleaser reads --release-notes inside its
+  # changelog pipe, so disabling the pipe drops the notes (ssh-manager v3.2.0
+  # and v3.4.0 published empty bodies that way). With --release-notes given,
+  # GoReleaser uses that file (the tagged CHANGELOG.md section) and generates
+  # nothing itself.
+  use: git
