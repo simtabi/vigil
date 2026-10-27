@@ -6,6 +6,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- **Releases keep their notes.** `changelog: disable: true` makes current
+  GoReleaser skip the pipe that reads `--release-notes`, which published
+  ssh-manager v3.2.0 and v3.4.0 with empty bodies while the run reported
+  success; vigil's next release would have gone the same way. The config no
+  longer disables it, the release workflow sets the body from the tagged
+  CHANGELOG section after GoReleaser as a backstop, and a test fails if either
+  regresses.
+
 ### Documentation
 - Added ASCII diagrams across the docs: control-plane/data-flow and desired-state
   precedence (`architecture.md`), engine+scope decision (`installation.md`),
