@@ -1,24 +1,68 @@
 # Installation
 
-## Options
+## Install
 
-| Method | Command |
-|--------|---------|
-| Install script (macOS/Linux) | `curl -fsSL https://raw.githubusercontent.com/simtabi/vigil/main/scripts/install.sh \| sh` |
-| Install script (Windows) | `irm https://raw.githubusercontent.com/simtabi/vigil/main/scripts/install.ps1 \| iex` |
-| Homebrew | `brew install simtabi/tap/vigil` |
-| Scoop | `scoop bucket add simtabi https://github.com/simtabi/scoop-bucket; scoop install vigil` |
-| deb/rpm | download from releases, `sudo dpkg -i vigil_*.deb` / `sudo rpm -i vigil_*.rpm` |
-| go install | `go install github.com/simtabi/vigil/cmd/vigil@latest` |
-| Prebuilt archive | download `vigil_<os>_<arch>.{tar.gz,zip}` from the releases page |
-| From source | `go build -o vigil ./cmd/vigil` |
+vigil is built from source. Binary releases are on hold until the maintainer
+decides otherwise, so this page offers no download, install-script,
+package-manager or `go install` path. You need Go (the version `go.mod` names),
+`git` and `make`.
 
-The install scripts download the prebuilt binary and **verify its SHA-256**
-against the release `checksums.txt`, falling back to a source build if the
-download fails and Go is present.
+```bash
+git clone https://github.com/simtabi/vigil ~/src/vigil
+make -C ~/src/vigil build        # -> ~/src/vigil/vigil
+~/src/vigil/vigil self install   # copies it to ~/.local/bin (see below)
+vigil doctor
+```
 
-> **go install / source on macOS** needs a C toolchain (Xcode CLT) because the
-> macOS input backend uses cgo. Windows and Linux are pure Go.
+`install -m 0755 ~/src/vigil/vigil ~/.local/bin/vigil`, or any directory on
+`PATH`, works in place of `vigil self install`. On Windows, clone the same way
+and build with `go -C $HOME\src\vigil build -o vigil.exe ./cmd/vigil` from
+PowerShell, then run `$HOME\src\vigil\vigil.exe self install`.
+
+> **macOS** needs a C toolchain (Xcode Command Line Tools) because the macOS
+> input backend uses cgo. Windows and Linux are pure Go.
+
+A version is a tag: check one out to build exactly that release.
+
+```bash
+git -C ~/src/vigil fetch --tags
+git -C ~/src/vigil checkout v0.7.0
+make -C ~/src/vigil build
+```
+
+### Updating
+
+```bash
+git -C ~/src/vigil pull --ff-only
+make -C ~/src/vigil build
+~/src/vigil/vigil self install
+vigil restart                    # if the background service is installed
+```
+
+Do not use `vigil upgrade` on a source build; see [updating.md](updating.md).
+`vigil version` reports the version `git describe` gave the build, so a build
+from a branch is still identifiable.
+
+### Earlier binary releases
+
+0.1.0 to 0.7.0 were published as archives on
+[GitHub Releases](https://github.com/simtabi/vigil/releases). Those stay where
+they are and an existing install keeps working, but no new release is published
+while binary releases are on hold: build from source to get anything newer. The
+install scripts in `scripts/` remain in the tree, but they download the latest
+published release, so they cannot install anything newer than 0.7.0. For
+reference, those archives are named `vigil_<os>_<arch>` (macOS uses the
+`macos` token):
+
+| Machine | Archive |
+|---------|---------|
+| macOS — any (Apple Silicon **or** Intel) | `vigil_macos_universal.tar.gz` |
+| macOS — Apple Silicon only | `vigil_macos_arm64.tar.gz` |
+| macOS — Intel only | `vigil_macos_amd64.tar.gz` |
+| Windows 64-bit / 32-bit / ARM | `vigil_windows_amd64.zip` / `_386` / `_arm64` |
+| Linux 64-bit / 32-bit / ARM64 / ARMv7 | `vigil_linux_amd64.tar.gz` / `_386` / `_arm64` / `_armv7` |
+
+(Also: `riscv64`, `ppc64le`, `s390x`, and FreeBSD/OpenBSD/NetBSD.)
 
 ## Building all targets yourself
 
@@ -36,8 +80,8 @@ dist/
 
 It builds whatever your local toolchain supports (macOS targets need a C
 compiler; everything else is pure-Go cross-compilation). CI runs the same script
-on every push to `main`, so prebuilt binaries are always downloadable from the
-latest run's Artifacts.
+on every pull request so a reviewer can try the exact build; those are
+`0.0.0-dev` builds for review, not a distribution channel.
 
 ## Putting the binary on PATH
 
@@ -67,8 +111,8 @@ vigil start | stop | restart | status
 vigil uninstall        # stop + remove the service (keeps the binary)
 ```
 
-The install scripts can do the whole thing in one shot with `--with-service`
-(`-WithService` on Windows). To remove everything later:
+`vigil install --init` does the whole thing in one shot. To remove everything
+later:
 
 ```bash
 # macOS/Linux

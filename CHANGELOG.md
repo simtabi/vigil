@@ -15,6 +15,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `TestReleaseRunsOnlyOnAConfirmedDispatch` fails if `release.yml` regains an
   automatic trigger or loses the confirmation.
 
+### Documentation
+- **Building from source is the only documented install path.** The README and
+  `installation.md` no longer offer the install scripts, Homebrew, Scoop, deb/rpm,
+  release downloads or `go install`; they give a clone, `make build`,
+  `vigil self install`, how to pin a tag and update, and say the 0.1.0-0.7.0
+  release archives stay where they are but no new release is published.
+  `updating.md` says `vigil upgrade` finds nothing newer than 0.7.0 while
+  releases are on hold, and warns against running it on a source build between
+  tags, whose `git describe` version sorts below the last release.
+
 ### Fixed
 - **Releases keep their notes.** `changelog: disable: true` makes current
   GoReleaser skip the pipe that reads `--release-notes`, which published

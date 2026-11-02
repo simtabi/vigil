@@ -1,5 +1,30 @@
 # Updating
 
+> **Binary releases are on hold.** No new GitHub release is being published, so
+> `vigil upgrade` finds nothing newer than 0.7.0, the last published release.
+> To get anything newer, build from source and update from git (below). The
+> self-update mechanism described on this page is unchanged and still in the
+> binary; it will pick up releases again if they resume.
+
+## From source (the current way to update)
+
+```bash
+git -C ~/src/vigil pull --ff-only
+make -C ~/src/vigil build
+~/src/vigil/vigil self install   # replace the binary on PATH
+vigil restart                    # if the background service is installed
+```
+
+The clone path is whatever you used in [installation](installation.md#install).
+On macOS, re-grant Accessibility after the rebuild (see Caveats).
+
+**Do not run `vigil upgrade` on a source build.** `make build` stamps the
+version from `git describe`, so a build between tags reports something like
+`v0.7.0-3-gabc1234`. Semver sorts that *below* `0.7.0`, so `vigil upgrade`
+treats the 0.7.0 release as newer and would replace your build with it. A build
+of exactly a tag (`v0.7.0`) is reported as up to date, and a plain `go build`
+without the Makefile reports `dev` and is refused.
+
 ## Self-update (standalone installs)
 
 ```bash
@@ -30,7 +55,8 @@ it again.
 
 ## Package-manager installs
 
-If you installed through a package manager, `vigil upgrade` refuses and points you
+No package-manager channel is updated while binary releases are on hold. If you
+installed through a package manager, `vigil upgrade` refuses and points you
 to the right tool:
 
 | Installed via | Update with |
