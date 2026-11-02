@@ -6,6 +6,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- **Binary releases are on hold; the release workflow runs only on a confirmed
+  manual dispatch.** A tag push no longer starts GoReleaser. A release is
+  dispatched on a `v[0-9]*` tag with `-f confirm=release-go`
+  (`gh workflow run release.yml --repo simtabi/vigil --ref vX.Y.Z -f confirm=release-go`),
+  and the first step refuses anything else before a single artifact is built.
+  `TestReleaseRunsOnlyOnAConfirmedDispatch` fails if `release.yml` regains an
+  automatic trigger or loses the confirmation.
+
 ### Fixed
 - **Releases keep their notes.** `changelog: disable: true` makes current
   GoReleaser skip the pipe that reads `--release-notes`, which published

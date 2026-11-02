@@ -1,8 +1,11 @@
 # Release process
 
-Releases are tag-driven. The git tag is the single source of version truth;
-`vigil version` is stamped at build time via ldflags
-(`internal/cli.version/commit/date`).
+Releases are tag-driven, and binary releases are on hold. The git tag is the
+single source of version truth; `vigil version` is stamped at build time via
+ldflags (`internal/cli.version/commit/date`). A `vX.Y.Z` tag records a version;
+binaries are built from it only when the release workflow is dispatched by hand
+with a confirmation (below). Until binary releases resume, users build from
+source ([installation](installation.md#install)).
 
 ## Cutting a release
 
@@ -16,7 +19,18 @@ Releases are tag-driven. The git tag is the single source of version truth;
    git push origin vX.Y.Z
    ```
 
-The `Release` workflow (`.github/workflows/release.yml`) then runs.
+   Pushing a tag publishes nothing: no workflow starts on a tag push.
+4. Only when the owner has approved a binary release for this version, dispatch
+   the `Release` workflow (`.github/workflows/release.yml`) on the tag:
+
+   ```bash
+   gh workflow run release.yml --repo simtabi/vigil --ref vX.Y.Z -f confirm=release-go
+   ```
+
+   `vX.Y.Z` must be a real tag already on GitHub. The command publishes for real
+   (GitHub Release, assets, attestation), so run it only for an approved
+   version. The first step refuses to run without `confirm=release-go`, or on
+   any ref that is not a `v[0-9]*` tag, before anything is built.
 
 ## Build system (single-sourced)
 
@@ -59,7 +73,7 @@ make dist          # build + bundle everything the local toolchain supports
 ## Workflows
 
 ```
- git tag vX.Y.Z ─► release.yml
+ gh workflow run release.yml --ref vX.Y.Z -f confirm=release-go ─► release.yml
                       │
                       ├─ build-binaries.yml (reusable)
                       │     ├─ cross job (Linux/Windows/BSD, CGO-free, 1 runner)
@@ -80,10 +94,11 @@ make dist          # build + bundle everything the local toolchain supports
 - **`build-binaries.yml`** (reusable, `workflow_call`): the matrix build —
   a `cross` job (all CGO-free targets from `build/targets.txt`) + a `mac` job
   (darwin arm64/amd64). Uploads `dist-*` artifacts.
-- **`release.yml`** — on every `vX.Y.Z` tag (and `workflow_dispatch` for a given
-  tag): calls `build-binaries`, then `release` collects artifacts, writes
-  `checksums.txt`, extracts the CHANGELOG section as the body, and publishes the
-  GitHub Release; `brew-scoop` updates the tap/bucket (best-effort).
+- **`release.yml`** — on a confirmed `workflow_dispatch` against a `vX.Y.Z`
+  tag only (a tag push starts nothing): calls `build-binaries`, then `release`
+  collects artifacts, writes `checksums.txt`, extracts the CHANGELOG section as
+  the body, and publishes the GitHub Release; `brew-scoop` updates the
+  tap/bucket (best-effort).
 - **`ci.yml`** `snapshot` job — on pushes to `main` and on demand: calls
   `build-binaries` so **ready-to-run binaries are always available** as run
   artifacts even before a tag (versioned `0.0.0-dev+<sha>`, which self-update
@@ -105,7 +120,7 @@ archive name, the flat inner-binary name, **bare-filename** `checksums.txt`, and
 3. Add the write deploy keys `HOMEBREW_TAP_DEPLOY_KEY` (on `simtabi/homebrew-tap`) and `SCOOP_BUCKET_DEPLOY_KEY` (on `simtabi/scoop-bucket`), each a repository secret that reaches its one repository and nothing else (the deploy-key guide in
    `imanimanyara/github-apps` `docs/operations.md`). `TAP_GITHUB_TOKEN` is only
    a fallback, and the Winget pull request's token.
-4. Push the first `vX.Y.Z` tag.
+4. Push the first `vX.Y.Z` tag, then dispatch the release on it as above.
 
 Every release carries a real, human-readable description sourced from the
 CHANGELOG — never a bare "see changelog" stub. Keep GitHub Actions current via
