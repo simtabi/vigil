@@ -6,7 +6,34 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+- **Binary releases are on hold; the release workflow runs only on a confirmed
+  manual dispatch.** A tag push no longer starts GoReleaser. A release is
+  dispatched on a `v[0-9]*` tag with `-f confirm=release-go`
+  (`gh workflow run release.yml --repo simtabi/vigil --ref vX.Y.Z -f confirm=release-go`),
+  and the first step refuses anything else before a single artifact is built.
+  `TestReleaseRunsOnlyOnAConfirmedDispatch` fails if `release.yml` regains an
+  automatic trigger or loses the confirmation.
+
+### Documentation
+- **Building from source is the only documented install path.** The README and
+  `installation.md` no longer offer the install scripts, Homebrew, Scoop, deb/rpm,
+  release downloads or `go install`; they give a clone, `make build`,
+  `vigil self install`, how to pin a tag and update, and say the 0.1.0-0.7.0
+  release archives stay where they are but no new release is published.
+  `updating.md` says `vigil upgrade` finds nothing newer than 0.7.0 while
+  releases are on hold, and that it refuses to replace a source build with an
+  older release unless `--force` is given.
+
 ### Fixed
+- **`vigil upgrade` no longer replaces a newer build with an older release.**
+  `make build` stamps `git describe` versions such as `v0.7.0-3-gabc1234`, which
+  semver sorts below `0.7.0`, so a source build was offered the 0.7.0 binary as
+  an update and the TUI showed "update available". `selfupdate.Compare` now
+  counts git-describe, `-dirty` and `-dev` builds and unparseable versions as
+  newer than their base tag; `vigil upgrade` refuses to install an older
+  release unless `--force` (new, on `upgrade` and `self update`) is given, and
+  the banner no longer claims an update for such builds.
 - **Releases keep their notes.** `changelog: disable: true` makes current
   GoReleaser skip the pipe that reads `--release-notes`, which published
   ssh-manager v3.2.0 and v3.4.0 with empty bodies while the run reported

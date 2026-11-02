@@ -25,7 +25,11 @@ type Info struct {
 	Current   string
 	Latest    string
 	Available bool
-	Notes     string
+	// Ahead is set when the running version is newer than the release, is a
+	// source build past its tag, or cannot be parsed: installing the release
+	// would not move forward, so it is refused unless forced.
+	Ahead bool
+	Notes string
 }
 
 // IsDev reports whether a version string is an unreleased build (empty, "dev",
@@ -62,17 +66,35 @@ func Check(ctx context.Context, current string) (Info, error) {
 	if !found || rel == nil {
 		return Info{Current: current}, nil
 	}
-	info := Info{Current: current, Latest: rel.Version(), Notes: rel.ReleaseNotes}
-	if !IsDev(current) {
-		info.Available = rel.GreaterThan(current)
+	return checkInfo(current, rel.Version(), rel.ReleaseNotes), nil
+}
+
+// checkInfo builds Check's answer from Compare. Available, which drives the TUI
+// "update available" banner, is set only for a strictly newer release.
+func checkInfo(current, latest, notes string) Info {
+	info := Info{Current: current, Latest: latest, Notes: notes}
+	switch Compare(current, latest) {
+	case ReleaseNewer:
+		info.Available = true
+	case RunningAhead:
+		info.Ahead = true
 	}
-	return info, nil
+	return info
 }
 
 // Apply downloads the latest release (if newer) and replaces this binary,
-// verifying the checksum. The caller must stop a running service first.
+// verifying the checksum. The caller must stop a running service first. It is
+// ApplyWith without force.
 func Apply(ctx context.Context, current string) (Info, error) {
-	if IsDev(current) {
+	return ApplyWith(ctx, current, false)
+}
+
+// ApplyWith is Apply with an explicit force. Without force it never installs a
+// release older than (or not provably newer than) the running version: that
+// returns ErrRunningNewer, and a dev build returns ErrDevVersion. With force it
+// installs the latest release over either, but never reinstalls the same one.
+func ApplyWith(ctx context.Context, current string, force bool) (Info, error) {
+	if IsDev(current) && !force {
 		return Info{}, ErrDevVersion
 	}
 	exe, err := ExecutablePath()
@@ -87,14 +109,17 @@ func Apply(ctx context.Context, current string) (Info, error) {
 	if err != nil {
 		return Info{}, err
 	}
+	if !found || rel == nil {
+		return Info{Current: current}, nil
+	}
 	// Only replace the binary when the release is strictly newer — never downgrade
-	// to a re-tagged or yanked "latest", and report Available honestly.
-	if !found || rel == nil || !rel.GreaterThan(current) {
-		latest := ""
-		if rel != nil {
-			latest = rel.Version()
-		}
-		return Info{Current: current, Latest: latest, Available: false}, nil
+	// to a re-tagged or yanked "latest", or below a source build — unless forced.
+	install, err := ShouldInstall(current, rel.Version(), force)
+	if err != nil {
+		return Info{Current: current, Latest: rel.Version(), Ahead: true}, err
+	}
+	if !install {
+		return Info{Current: current, Latest: rel.Version()}, nil
 	}
 	if err := up.UpdateTo(ctx, rel, exe); err != nil {
 		return Info{}, err

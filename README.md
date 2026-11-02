@@ -59,43 +59,21 @@ schedule, keeps the session non-idle with one of two **engines**:
 
 ## Install
 
-Pick whichever fits (full details in [docs/installation.md](docs/installation.md)):
+vigil is built from source: binary releases are on hold, so there is no
+download, install-script, package-manager or `go install` channel to use. You
+need Go (the version `go.mod` names), `git` and `make`; macOS also needs the
+Xcode Command Line Tools, because the input backend uses cgo.
 
 ```bash
-# Script (macOS/Linux) — downloads + checksum-verifies the prebuilt binary
-curl -fsSL https://raw.githubusercontent.com/simtabi/vigil/main/scripts/install.sh | sh
-# …or in one shot, also configure + install + start the background daemon:
-curl -fsSL https://raw.githubusercontent.com/simtabi/vigil/main/scripts/install.sh | sh -s -- --with-service
-
-# Homebrew (macOS/Linux)
-brew install simtabi/tap/vigil
-
-# Scoop (Windows, PowerShell)
-scoop bucket add simtabi https://github.com/simtabi/scoop-bucket; scoop install vigil
-
-# Debian/Ubuntu or RHEL — grab the .deb/.rpm from the latest release, then:
-sudo dpkg -i vigil_*_amd64.deb        # or: sudo rpm -i vigil_*_amd64.rpm
-
-# Go toolchain (Windows/Linux; macOS needs a C compiler for cgo)
-go install github.com/simtabi/vigil/cmd/vigil@latest
+git clone https://github.com/simtabi/vigil ~/src/vigil
+make -C ~/src/vigil build        # -> ~/src/vigil/vigil
+~/src/vigil/vigil self install   # copies it to ~/.local/bin
+vigil doctor
 ```
 
-Or download a prebuilt archive from the [releases page](https://github.com/simtabi/vigil/releases),
-or build from source (`go build -o vigil ./cmd/vigil`). Then run `vigil config wizard`
-(or `vigil config init`) and `vigil install`.
-
-**Which download?** (assets are named `vigil_<os>_<arch>` — macOS uses the friendly
-`macos` token; self-update matches automatically):
-
-| Your machine | Asset |
-|--------------|-------|
-| macOS — any (Apple Silicon **or** Intel) | `vigil_macos_universal.tar.gz` |
-| macOS — Apple Silicon only | `vigil_macos_arm64.tar.gz` |
-| macOS — Intel only | `vigil_macos_amd64.tar.gz` |
-| Windows 64-bit / 32-bit / ARM | `vigil_windows_amd64.zip` / `_386` / `_arm64` |
-| Linux 64-bit / 32-bit / ARM64 / ARMv7 | `vigil_linux_amd64.tar.gz` / `_386` / `_arm64` / `_armv7` |
-
-(Also: `riscv64`, `ppc64le`, `s390x`, and FreeBSD/OpenBSD/NetBSD.)
+Then run `vigil config wizard` (or `vigil config init`) and `vigil install`.
+Windows, pinning a version, updating, and the archives published for 0.1.0 to
+0.7.0 are in [docs/installation.md](docs/installation.md).
 
 The **input** engine must be installed with `--scope user` (default, GUI
 session); a system-wide service (`--scope system`) is intended for the `graph`
@@ -131,14 +109,17 @@ The full configuration walkthrough is in [docs/configuration.md](docs/configurat
 
 ## Updating
 
+No new releases are published while binary releases are on hold, so update a
+source build from git:
+
 ```bash
-vigil upgrade            # self-update to the latest release (verifies checksum)
-vigil upgrade --check    # just report whether an update is available
+git -C ~/src/vigil pull --ff-only
+make -C ~/src/vigil build && ~/src/vigil/vigil self install
+vigil restart            # if the background service is installed
 ```
 
-`vigil upgrade` only manages standalone installs; if you installed via Homebrew,
-Scoop, or a system package it tells you to use that manager instead. See
-[docs/updating.md](docs/updating.md).
+`vigil upgrade` (self-update from GitHub releases) is still in the binary, but
+it finds nothing newer than 0.7.0; see [docs/updating.md](docs/updating.md).
 
 ## The daemon
 

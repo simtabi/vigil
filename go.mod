@@ -4,6 +4,7 @@ go 1.26.0
 
 require (
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.10.1
+	github.com/Masterminds/semver/v3 v3.5.0
 	github.com/bendahl/uinput v1.7.0
 	github.com/briandowns/spinner v1.23.2
 	github.com/charmbracelet/bubbles v1.0.0
@@ -22,7 +23,6 @@ require (
 require (
 	code.gitea.io/sdk/gitea v0.25.1 // indirect
 	github.com/42wim/httpsig v1.2.4 // indirect
-	github.com/Masterminds/semver/v3 v3.5.0 // indirect
 	github.com/ProtonMail/go-crypto v1.5.2 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect

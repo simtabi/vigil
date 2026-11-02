@@ -14,14 +14,15 @@ import (
 )
 
 var (
-	flagCheck bool
-	flagPurge bool
+	flagCheck        bool
+	flagUpgradeForce bool
+	flagPurge        bool
 )
 
 var upgradeCmd = &cobra.Command{
 	Use:     "upgrade",
 	Short:   "Update vigil to the latest release (alias of `self update`)",
-	Example: "  vigil upgrade --check\n  vigil upgrade --yes",
+	Example: "  vigil upgrade --check\n  vigil upgrade --yes\n  vigil upgrade --force",
 	RunE:    func(_ *cobra.Command, _ []string) error { return doUpgrade() },
 }
 
@@ -70,8 +71,8 @@ func doUpgrade() error {
 		return nil
 	}
 
-	if selfupdate.IsDev(version) {
-		return fmt.Errorf("%w (use a released build, or `vigil upgrade --check`)", selfupdate.ErrDevVersion)
+	if selfupdate.IsDev(version) && !flagUpgradeForce {
+		return fmt.Errorf("%w (use a released build, `vigil upgrade --check`, or --force)", selfupdate.ErrDevVersion)
 	}
 	if !ch.SelfUpdatable() {
 		return fmt.Errorf("not self-updating: %s", ch.Advice())
@@ -85,11 +86,24 @@ func doUpgrade() error {
 	}); err != nil {
 		return err
 	}
-	if !info.Available {
+	if info.Latest == "" {
+		ui.Info("no releases found")
+		return nil
+	}
+	// The downgrade guard: a release older than this build is refused unless forced.
+	install, err := selfupdate.ShouldInstall(version, info.Latest, flagUpgradeForce)
+	if err != nil {
+		return err
+	}
+	if !install {
 		ui.Info("already up to date (%s)", version)
 		return nil
 	}
-	if !ui.Confirm(fmt.Sprintf("Update %s → %s?", info.Current, info.Latest), false) {
+	prompt := fmt.Sprintf("Update %s → %s?", info.Current, info.Latest)
+	if info.Ahead {
+		prompt = fmt.Sprintf("Replace %s with the older release %s?", displayCurrent(info.Current), info.Latest)
+	}
+	if !ui.Confirm(prompt, false) {
 		ui.Info("cancelled")
 		return nil
 	}
@@ -107,7 +121,7 @@ func doUpgrade() error {
 	var applied selfupdate.Info
 	applyErr := ui.Spin(fmt.Sprintf("Downloading %s", info.Latest), func() error {
 		var e error
-		applied, e = selfupdate.Apply(ctx, version)
+		applied, e = selfupdate.ApplyWith(ctx, version, flagUpgradeForce)
 		return e
 	})
 	if wasRunning {
@@ -129,7 +143,7 @@ func printCheck(info selfupdate.Info, ch selfupdate.Channel) {
 	if flagJSON {
 		_ = printJSON(map[string]any{
 			"current": info.Current, "latest": info.Latest,
-			"available": info.Available, "channel": ch.String(),
+			"available": info.Available, "ahead": info.Ahead, "channel": ch.String(),
 			"self_updatable": ch.SelfUpdatable(),
 		})
 		return
@@ -142,9 +156,19 @@ func printCheck(info selfupdate.Info, ch selfupdate.Channel) {
 		if !ch.SelfUpdatable() {
 			fmt.Println(ch.Advice())
 		}
+	case info.Ahead:
+		fmt.Printf("no update: %s is newer than the latest release %s\n", displayCurrent(info.Current), info.Latest)
 	default:
 		fmt.Printf("up to date (%s)\n", info.Current)
 	}
+}
+
+// displayCurrent names the running version, including an unversioned build.
+func displayCurrent(v string) string {
+	if v == "" {
+		return "this build"
+	}
+	return v
 }
 
 func doSelfInstall() error {
@@ -207,6 +231,8 @@ func doSelfUninstall() error {
 func init() {
 	upgradeCmd.Flags().BoolVar(&flagCheck, "check", false, "only report whether an update is available")
 	selfUpdateCmd.Flags().BoolVar(&flagCheck, "check", false, "only report whether an update is available")
+	upgradeCmd.Flags().BoolVar(&flagUpgradeForce, "force", false, "install the latest release even if it is older than this build")
+	selfUpdateCmd.Flags().BoolVar(&flagUpgradeForce, "force", false, "install the latest release even if it is older than this build")
 	selfUninstallCmd.Flags().BoolVar(&flagPurge, "purge", false, "also delete config and runtime data")
 
 	selfCmd.AddCommand(selfUpdateCmd, selfInstallCmd, selfUninstallCmd)
