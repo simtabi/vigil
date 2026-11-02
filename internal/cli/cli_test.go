@@ -64,3 +64,19 @@ func TestVersionRuns(t *testing.T) {
 	}
 	rootCmd.SetArgs(nil)
 }
+
+// TestUpgradeForceFlag pins --force on both upgrade spellings: it is the only
+// way past the downgrade guard, so losing it from one would strand that path.
+func TestUpgradeForceFlag(t *testing.T) {
+	for _, path := range [][]string{{"upgrade"}, {"self", "update"}} {
+		cmd, _, err := rootCmd.Find(path)
+		if err != nil {
+			t.Fatalf("find %v: %v", path, err)
+		}
+		for _, name := range []string{"force", "check"} {
+			if cmd.Flags().Lookup(name) == nil {
+				t.Errorf("%v: expected --%s flag", path, name)
+			}
+		}
+	}
+}
