@@ -64,7 +64,7 @@ if curl $dl_opts "${BASE}/${asset}" -o "${tmp}/${asset}" && curl -fsSL "${BASE}/
 else
   echo "Download failed; trying to build from source..." >&2
   command -v go >/dev/null 2>&1 || { echo "Go not found and download failed." >&2; exit 1; }
-  GOBIN="$PREFIX" go install "github.com/${REPO}/cmd/vigil@latest"
+  GOBIN="$PREFIX" go install "github.com/${REPO}/src/cmd/vigil@latest"
   echo "Installed (from source): ${PREFIX}/vigil"
 fi
 

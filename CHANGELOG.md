@@ -6,6 +6,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- **The install scripts' build-from-source fallback names the module in `src/`.**
+  `src/scripts/install.sh` and `install.ps1` fell back to
+  `go install github.com/simtabi/vigil/cmd/vigil@latest`, the path from before the
+  module moved into `src/`, which resolves to the frozen 0.7.0. They now use
+  `github.com/simtabi/vigil/src/cmd/vigil@latest`. The fallback runs only when the
+  release download fails.
+
 ### Changed
 - **Binary releases are on hold; the release workflow runs only on a confirmed
   manual dispatch.** A tag push no longer starts GoReleaser. A release is
