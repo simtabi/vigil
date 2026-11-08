@@ -20,17 +20,29 @@ source ([installation](installation.md#install)).
    ```
 
    Pushing a tag publishes nothing: no workflow starts on a tag push.
-4. Only when the owner has approved a binary release for this version, dispatch
-   the `Release` workflow (`.github/workflows/release.yml`) on the tag:
+4. Only when the owner has approved a binary release for this version, turn the
+   `Release` workflow (`.github/workflows/release.yml`) on, dispatch it on the
+   tag, and turn it off again once the run has started:
 
    ```bash
+   gh workflow enable release.yml --repo simtabi/vigil
    gh workflow run release.yml --repo simtabi/vigil --ref vX.Y.Z -f confirm=release-go
+   gh workflow disable release.yml --repo simtabi/vigil
    ```
 
    `vX.Y.Z` must be a real tag already on GitHub. The command publishes for real
    (GitHub Release, assets, attestation), so run it only for an approved
    version. The first step refuses to run without `confirm=release-go`, or on
    any ref that is not a `v[0-9]*` tag, before anything is built.
+
+**The `Release` workflow is disabled in Actions while binary releases are on
+hold** (since 2026-11-08). A dispatch runs the copy of `release.yml` that the tag
+carries, and the tags `v0.1.0` through `v0.7.0` carry an older one that accepts
+a manual dispatch and publishes with no confirmation step. A tag cannot be
+changed, so the workflow's enabled state is the only control that covers them:
+a disabled workflow runs on no ref. Check it with
+`gh workflow list --repo simtabi/vigil --all`, which shows `Release` as
+`disabled_manually`.
 
 ## Repository layout
 

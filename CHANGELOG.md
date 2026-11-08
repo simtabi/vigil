@@ -15,6 +15,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   release download fails.
 
 ### Changed
+- **The `Release` workflow is disabled in Actions while binary releases are on
+  hold.** The tags `v0.1.0` through `v0.7.0` carry an older `release.yml` that a
+  manual dispatch would run with no confirmation step, and a disabled workflow
+  runs on no ref. `docs/release.md` gives the enable, dispatch and disable
+  commands for an approved release.
 - **Binary releases are on hold; the release workflow runs only on a confirmed
   manual dispatch.** A tag push no longer starts GoReleaser. A release is
   dispatched on a `v[0-9]*` tag with `-f confirm=release-go`
