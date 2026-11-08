@@ -51,7 +51,7 @@ stdout is not a TTY. (ASCII tags like `[OK]` are used in place of icons.)
 
 Long-running operations (`upgrade`, service `install`/`uninstall`) show a spinner
 on a terminal and a plain "…" line otherwise. The install **script**
-(`scripts/install.sh`) shows a download progress bar with transfer rate and ETA
+(`src/scripts/install.sh`) shows a download progress bar with transfer rate and ETA
 when run interactively.
 
 ## Input validation

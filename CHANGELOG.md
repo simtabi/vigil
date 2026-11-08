@@ -13,9 +13,46 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   (`gh workflow run release.yml --repo simtabi/vigil --ref vX.Y.Z -f confirm=release-go`),
   and the first step refuses anything else before a single artifact is built.
   `TestReleaseRunsOnlyOnAConfirmedDispatch` fails if `release.yml` regains an
-  automatic trigger or loses the confirmation.
+  automatic trigger or loses the confirmation, or if the refusal stops being the
+  first step.
+- **The Go module lives in `src/`.** `go.mod`, `go.sum`, `cmd/`, `internal/`,
+  `tui/`, `tools/iconz`, `scripts/`, `.goreleaser.yaml` and `.golangci.yml` moved
+  under `src/`, and the module path is now `github.com/simtabi/vigil/src`, as the
+  simtabi Go layout requires. `assets/`, `build/targets.txt` and
+  `build/nfpm.yaml` stay at the root. Every `go` command names the module
+  (`go -C src test ./...`); CI, Dependabot (`/src`, `/src/tools/iconz`), the
+  ldflags paths and GoReleaser (`dir: src`, run from the root with
+  `--config src/.goreleaser.yaml`) follow. A dispatched release now mirrors a
+  `src/vX.Y.Z` tag onto the release tag before GoReleaser runs, because Go
+  resolves a module in `src/` only through that tag.
+- **`build/` holds one folder per OS and nothing else.** `make build` writes
+  `build/<os>/vigil` (`build/macos/vigil` on a Mac) instead of `./vigil`;
+  `make cross` builds every target in `build/targets.txt` into `build/macos/`,
+  `build/linux/`, `build/windows/` and the BSD folders, with a
+  `build/checksums.txt` that verifies from inside `build/`; `make dist` adds
+  `build/archives/`. There is no `dist/` or `build/dist/` any more: GoReleaser's
+  scratch dist is `.cache/goreleaser/` (gitignored), and the release attestation
+  reads its checksums from there. `make check-build` (`TestBuildLayout`) fails on
+  anything else in `build/`, and runs after every build.
+- **`make cross` builds binaries**; the cgo-free compile check it used to run is
+  `make cross-check`. `make` alone still builds, and `make install` still copies
+  the host binary to `/usr/local/bin`.
+- **The install and uninstall scripts moved to `src/scripts/`.** The old
+  `main/scripts/…` URLs, which earlier installers printed, are kept as
+  deprecated forwarders to the new location, so they keep working.
+
+### Added
+- **Guards for the build and release layout**, in `src/internal/release`:
+  `TestBuildLayout` (with negative cases proving it rejects `dist/`, `darwin/`, a
+  per-target folder, a loose binary and GoReleaser metadata), `TestNoContainerImage`,
+  `TestDocsOfferNoGoInstall` and `TestReleaseMirrorsTheSrcTag`.
 
 ### Documentation
+- **Docs follow the `src/` module and `build/<os>/` layout.** README,
+  CONTRIBUTING, `installation.md`, `updating.md`, `release.md`, `architecture.md`,
+  `brand.md` and `cli.md` give the new paths. They still say binary releases are
+  on hold and build from source; `updating.md` no longer offers re-running
+  `go install` and says that channel is frozen at 0.7.0.
 - **Building from source is the only documented install path.** The README and
   `installation.md` no longer offer the install scripts, Homebrew, Scoop, deb/rpm,
   release downloads or `go install`; they give a clone, `make build`,

@@ -2,7 +2,7 @@
 
 Releases are tag-driven, and binary releases are on hold. The git tag is the
 single source of version truth; `vigil version` is stamped at build time via
-ldflags (`internal/cli.version/commit/date`). A `vX.Y.Z` tag records a version;
+ldflags (`github.com/simtabi/vigil/src/internal/cli.version/commit/date`). A `vX.Y.Z` tag records a version;
 binaries are built from it only when the release workflow is dispatched by hand
 with a confirmation (below). Until binary releases resume, users build from
 source ([installation](installation.md#install)).
@@ -32,81 +32,110 @@ source ([installation](installation.md#install)).
    version. The first step refuses to run without `confirm=release-go`, or on
    any ref that is not a `v[0-9]*` tag, before anything is built.
 
+## Repository layout
+
+The Go module lives in **`src/`** (`github.com/simtabi/vigil/src`): `src/go.mod`,
+`src/cmd/vigil`, `src/internal`, `src/tui`, `src/scripts`,
+`src/.goreleaser.yaml` and `src/.golangci.yml`. Everything the repository
+presents (README, docs, CHANGELOG, LICENSE, Makefile, `.github/`, `assets/`,
+`build/`) stays at the root. Every `go` command names the module with
+`go -C src …`; a bare `go test ./...` at the root finds no packages and passes.
+
+Because GitHub's `go-import` tag has no subdirectory field, Go resolves a
+version of a module in `src/` through a **`src/vX.Y.Z`** tag, not `vX.Y.Z`. The
+release workflow mirrors `src/vX.Y.Z` onto the release tag's commit before
+GoReleaser runs, and never moves one that already exists.
+
 ## Build system (single-sourced)
 
 The target list lives in **`build/targets.txt`** and the build/bundle logic in
-**`scripts/build-all.sh`** — used identically by `make dist` (local) and CI, so
-there's one source of truth.
+**`src/scripts/build-all.sh`** — used identically by `make cross` / `make dist`
+(local) and CI, so there's one source of truth. Every target but darwin is a
+static, CGO-free cross-compile; darwin needs cgo (the input engine links
+CoreGraphics/IOKit), so it builds only on a macOS host, with `amd64` cross-built
+through `clang -arch x86_64`.
 
 The **Windows binary icon + version info** are embedded via committed
-`cmd/vigil/rsrc_windows_*.syso` files that `go build` auto-links — no extra build
-step. Regenerate them (and the brand PNGs) from `assets/vigil.svg` with
+`src/cmd/vigil/rsrc_windows_*.syso` files that `go build` auto-links — no extra
+build step. Regenerate them (and the brand PNGs) from `assets/vigil.svg` with
 `make icons` after changing the logo; commit the results. See
 [brand.md](brand.md). Targets cover 64-bit, 32-bit (386/armv6/armv7),
 ARM64, RISC-V/ppc64le/s390x, Windows (incl. ARM64), macOS, and the BSDs.
 
-`make dist` produces a clean `dist/` root of bare ready-to-run binaries, with
-all archives and packages grouped under `dist/archives/`:
+`build/` holds one folder per OS and nothing else. `make build` writes the host
+binary, `make cross` every target, and `make dist` adds the archives:
 
 ```
-dist/
-  vigil_<os>_<arch>[.exe]      # bare, self-describing binaries (macOS uses "macos"; + vigil_macos_universal)
-  checksums.txt              # sha256 over the bare binaries
-  archives/
-    vigil_<os>_<arch>.tar.gz   # unix; the inner binary KEEPS the flat name
-    vigil_windows_<arch>.zip   # windows; inner vigil_windows_<arch>.exe
-    vigil_<arch>.deb / .rpm    # nfpm (build/nfpm.yaml)
-    checksums.txt            # sha256 over archives/packages
+build/
+  targets.txt  nfpm.yaml        # tracked inputs
+  checksums.txt                 # sha256 over every binary, as {os}/{file}
+  macos/    vigil  vigil_macos_arm64  vigil_macos_amd64  vigil_macos_universal
+  linux/    vigil_linux_amd64  vigil_linux_386  vigil_linux_arm64  vigil_linux_armv7  …
+  windows/  vigil_windows_amd64.exe  vigil_windows_386.exe  vigil_windows_arm64.exe
+  freebsd/  openbsd/  netbsd/
+  archives/                     # make dist only
+    vigil_<os>_<arch>.tar.gz    # unix; the inner binary KEEPS the flat name
+    vigil_windows_<arch>.zip    # windows; inner vigil_windows_<arch>.exe
+    vigil_<arch>.deb / .rpm     # nfpm (build/nfpm.yaml), with VIGIL_PACKAGES=1
+    checksums.txt               # sha256 over archives/packages, bare names
+```
+
+The OS folder is the OS token (`macos`, never `darwin`) and each file keeps its
+full self-describing name. There is no `build/dist/` and no per-target subfolder;
+`make check-build` (`TestBuildLayout` in `src/internal/release`) fails on anything
+else, and runs after every `make build`, `make cross` and `make dist`. Verify a
+build with:
+
+```bash
+make cross
+cd build && shasum -a 256 -c checksums.txt
 ```
 
 Archive names are **version-less** (`vigil_<os>_<arch>.{tar.gz,zip}`) to keep the
 self-update contract stable. macOS ships a **universal** binary
-(`vigil_macos_universal`, Apple Silicon + Intel). GitHub release assets = the
-contents of `dist/archives/`. macOS artifacts use the `macos` token (Go's
-`darwin` is hard to recognize); self-update sets the updater's OS to `macos`
-accordingly.
-
-```bash
-make dist          # build + bundle everything the local toolchain supports
-```
+(`vigil_macos_universal`, Apple Silicon + Intel). macOS artifacts use the `macos`
+token (Go's `darwin` is hard to recognize); self-update sets the updater's OS to
+`macos` accordingly. GitHub release assets stay flat: a dispatched release runs
+GoReleaser from the repository root with `--config src/.goreleaser.yaml`, which
+writes its scratch dist to `.cache/goreleaser/` (gitignored), never into `build/`,
+and uploads from there.
 
 ## Workflows
 
 ```
- gh workflow run release.yml --ref vX.Y.Z -f confirm=release-go ─► release.yml
+ gh workflow run release.yml --repo simtabi/vigil --ref vX.Y.Z -f confirm=release-go
                       │
-                      ├─ build-binaries.yml (reusable)
-                      │     ├─ cross job (Linux/Windows/BSD, CGO-free, 1 runner)
-                      │     └─ mac job  (darwin arm64+amd64 + universal, cgo)
-                      │            └─► dist/archives/*  (+ Windows .ico embedded)
                       ▼
-                  release job ─► checksums.txt + CHANGELOG body ─► GitHub Release
-                      │
-                      └─ brew-scoop ─► update tap + bucket (best-effort, needs token)
+                 release.yml (macOS runner)
+                      ├─ refuse unless confirm=release-go on a v[0-9]* tag
+                      ├─ mirror src/vX.Y.Z onto the tag
+                      ├─ GoReleaser --config src/.goreleaser.yaml ─► .cache/goreleaser/
+                      │     binaries + archives + deb/rpm/apk + source tarball + SBOMs
+                      │     + checksums.txt ─► GitHub Release, tap/bucket manifests
+                      ├─ release body from the CHANGELOG section
+                      └─ build-provenance attestation over .cache/goreleaser/checksums.txt
 
- push to main ─► ci.yml snapshot ─► same bundles as run artifacts (version 0.0.0-dev+sha)
+ pull request ─► ci.yml snapshot ─► build-binaries.yml ─► build/archives/* as run artifacts
+                                                          (version 0.0.0-dev+sha)
 ```
 
-> GoReleaser's `prebuilt` builder is Pro-only and the macOS backend needs cgo
-> (no Linux cross-compile), so builds run natively: Linux/Windows/BSD cross-
-> compile CGO-free on one Linux runner; macOS uses cgo on macOS runners.
-
 - **`build-binaries.yml`** (reusable, `workflow_call`): the matrix build —
-  a `cross` job (all CGO-free targets from `build/targets.txt`) + a `mac` job
-  (darwin arm64/amd64). Uploads `dist-*` artifacts.
+  a `cross` job (all CGO-free targets from `build/targets.txt`, plus deb/rpm) and
+  a `mac` job (darwin arm64/amd64 + universal, cgo). Each runs
+  `src/scripts/build-all.sh`, verifies `build/checksums.txt` and the `build/`
+  layout, and uploads `build/archives/*`.
 - **`release.yml`** — on a confirmed `workflow_dispatch` against a `vX.Y.Z`
-  tag only (a tag push starts nothing): calls `build-binaries`, then `release`
-  collects artifacts, writes `checksums.txt`, extracts the CHANGELOG section as
-  the body, and publishes the GitHub Release; `brew-scoop` updates the
-  tap/bucket (best-effort).
-- **`ci.yml`** `snapshot` job — on pushes to `main` and on demand: calls
-  `build-binaries` so **ready-to-run binaries are always available** as run
-  artifacts even before a tag (versioned `0.0.0-dev+<sha>`, which self-update
-  treats as a dev build).
+  tag only (a tag push starts nothing): GoReleaser cross-compiles and publishes
+  the GitHub Release, the body is set from the CHANGELOG section, and the
+  artifacts get a build-provenance attestation.
+- **`ci.yml`** `snapshot` job — on every pull request and on demand: calls
+  `build-binaries` so **ready-to-run binaries are available** as run artifacts
+  before a change merges (versioned `0.0.0-dev+<sha>`, which self-update treats
+  as a dev build). It publishes nothing.
 
 ## Self-update contract
 
-`internal/selfupdate` downloads `vigil_<os>_<arch>.<ext>` and validates it against
+`src/internal/selfupdate` downloads `vigil_<os>_<arch>.<ext>` and validates it against
 `checksums.txt`. The inner binary keeps the **flat** name
 (`vigil_<os>_<arch>[.exe]`), which `go-selfupdate`'s `matchExecutableName` accepts
 (`^cmd([_-]v?semver)?([_-]os[_-]arch)?(\.exe)?$`). Keep these aligned: the

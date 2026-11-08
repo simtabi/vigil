@@ -36,11 +36,16 @@ with fsnotify. Only the daemon keeps long-lived OS state.
 
 ## Components
 
+The Go module lives in `src/` (`github.com/simtabi/vigil/src`); everything the
+repository presents stays at the root. Paths below are under `src/`.
+
 ```
-cmd/vigil/        main entrypoint (so `go install …/cmd/vigil` yields `vigil`)
+cmd/vigil/      main entrypoint (the package directory names the `vigil` binary)
 internal/cli/   cobra CLI (run, install, on/off/resume, status, config, schedule,
                 auth, doctor, self/upgrade, tui)
 tui/            bubbletea hub (dashboard, schedule & settings editors, wizard)
+scripts/        build-all.sh (build/<os>/), extract-changelog.sh, install/uninstall
+tools/iconz/    separate module: brand PNGs + Windows .syso from assets/vigil.svg
 internal/
   selfupdate/   go-selfupdate wrapper + install-channel detection
   config/       versioned JSON schema, defaults, validation, OS paths
@@ -50,6 +55,7 @@ internal/
   control/      file control plane (status.json/override.json) + single-instance lock
   engine/       the daemon loop
   service/      kardianos install/control + Windows logon-task installer
+  release/      tests only: release trigger, build/ layout, no container, no go install
 ```
 
 ## The daemon loop (`internal/engine`)
