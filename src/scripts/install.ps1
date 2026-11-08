@@ -1,9 +1,9 @@
 # Install vigil on Windows by downloading the latest prebuilt release and
 # verifying its SHA-256. Falls back to `go install` if Go is present.
 #
-#   irm https://raw.githubusercontent.com/simtabi/vigil/main/scripts/install.ps1 | iex
-#   ./scripts/install.ps1 -Prefix C:\Tools
-#   ./scripts/install.ps1 -WithService   # also configure + install + start the daemon
+#   irm https://raw.githubusercontent.com/simtabi/vigil/main/src/scripts/install.ps1 | iex
+#   ./src/scripts/install.ps1 -Prefix C:\Tools
+#   ./src/scripts/install.ps1 -WithService   # also configure + install + start the daemon
 
 param(
     [string]$Prefix = "$env:LOCALAPPDATA\Programs\vigil",
@@ -66,5 +66,5 @@ else {
     Write-Host "  vigil install          # install + start the logon task / service"
     Write-Host "                       # (or re-run this installer with -WithService)"
     Write-Host ""
-    Write-Host "Uninstall later:  irm https://raw.githubusercontent.com/$repo/main/scripts/uninstall.ps1 | iex"
+    Write-Host "Uninstall later:  irm https://raw.githubusercontent.com/$repo/main/src/scripts/uninstall.ps1 | iex"
 }

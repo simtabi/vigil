@@ -1,8 +1,8 @@
 # Remove vigil on Windows: stops + removes the logon task / service and deletes the
 # binary (delegates to `vigil self uninstall`).
 #
-#   irm https://raw.githubusercontent.com/simtabi/vigil/main/scripts/uninstall.ps1 | iex
-#   ./scripts/uninstall.ps1 -Purge    # also delete config and runtime data
+#   irm https://raw.githubusercontent.com/simtabi/vigil/main/src/scripts/uninstall.ps1 | iex
+#   ./src/scripts/uninstall.ps1 -Purge    # also delete config and runtime data
 
 param([switch]$Purge)
 

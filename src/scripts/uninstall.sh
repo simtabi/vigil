@@ -2,9 +2,9 @@
 # Remove vigil on macOS/Linux: stops + removes the background service and deletes
 # the binary (delegates to `vigil self uninstall`, which knows the per-OS teardown).
 #
-#   curl -fsSL https://raw.githubusercontent.com/simtabi/vigil/main/scripts/uninstall.sh | sh
-#   ./scripts/uninstall.sh            # remove service + binary
-#   ./scripts/uninstall.sh --purge    # also delete config and runtime data
+#   curl -fsSL https://raw.githubusercontent.com/simtabi/vigil/main/src/scripts/uninstall.sh | sh
+#   ./src/scripts/uninstall.sh            # remove service + binary
+#   ./src/scripts/uninstall.sh --purge    # also delete config and runtime data
 set -eu
 
 PURGE=0

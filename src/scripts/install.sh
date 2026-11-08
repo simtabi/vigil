@@ -2,10 +2,10 @@
 # Install vigil on macOS/Linux by downloading the latest prebuilt release and
 # verifying its SHA-256. Falls back to building from source if Go is present.
 #
-#   curl -fsSL https://raw.githubusercontent.com/simtabi/vigil/main/scripts/install.sh | sh
-#   ./scripts/install.sh                  # binary only, to ~/.local/bin
-#   ./scripts/install.sh --with-service   # also configure + install + start the daemon
-#   sudo ./scripts/install.sh             # to /usr/local/bin
+#   curl -fsSL https://raw.githubusercontent.com/simtabi/vigil/main/src/scripts/install.sh | sh
+#   ./src/scripts/install.sh                  # binary only, to ~/.local/bin
+#   ./src/scripts/install.sh --with-service   # also configure + install + start the daemon
+#   sudo ./src/scripts/install.sh             # to /usr/local/bin
 set -eu
 
 REPO="simtabi/vigil"
@@ -84,6 +84,6 @@ Next steps:
                        # (or re-run this installer with --with-service)
 
 Uninstall later:
-  curl -fsSL https://raw.githubusercontent.com/${REPO}/main/scripts/uninstall.sh | sh
+  curl -fsSL https://raw.githubusercontent.com/${REPO}/main/src/scripts/uninstall.sh | sh
 EOF
 fi
