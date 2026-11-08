@@ -1,4 +1,4 @@
-module github.com/simtabi/vigil
+module github.com/simtabi/vigil/src
 
 go 1.26.0
 

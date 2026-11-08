@@ -6,7 +6,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/simtabi/vigil/internal/config"
+	"github.com/simtabi/vigil/src/internal/config"
 )
 
 // RunWizard launches the guided setup wizard and writes config on completion.

@@ -8,7 +8,7 @@ import (
 	"sync"
 	"unsafe"
 
-	"github.com/simtabi/vigil/internal/config"
+	"github.com/simtabi/vigil/src/internal/config"
 	"golang.org/x/sys/windows"
 )
 

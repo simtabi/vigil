@@ -13,11 +13,11 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/simtabi/vigil/internal/activity"
-	"github.com/simtabi/vigil/internal/config"
-	"github.com/simtabi/vigil/internal/control"
-	"github.com/simtabi/vigil/internal/graph"
-	"github.com/simtabi/vigil/internal/schedule"
+	"github.com/simtabi/vigil/src/internal/activity"
+	"github.com/simtabi/vigil/src/internal/config"
+	"github.com/simtabi/vigil/src/internal/control"
+	"github.com/simtabi/vigil/src/internal/graph"
+	"github.com/simtabi/vigil/src/internal/schedule"
 )
 
 // idlePoll is the wake cadence while inactive, so schedule transitions and

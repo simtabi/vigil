@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/simtabi/vigil/internal/config"
+	"github.com/simtabi/vigil/src/internal/config"
 )
 
 // dayOrder is the canonical weekday ordering used when rendering/toggling days.

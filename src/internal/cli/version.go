@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/simtabi/vigil/internal/brand"
-	"github.com/simtabi/vigil/internal/cli/ui"
+	"github.com/simtabi/vigil/src/internal/brand"
+	"github.com/simtabi/vigil/src/internal/cli/ui"
 	"github.com/spf13/cobra"
 )
 

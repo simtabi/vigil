@@ -6,12 +6,12 @@ import (
 	"os"
 	"time"
 
-	"github.com/simtabi/vigil/internal/cli/ui"
-	"github.com/simtabi/vigil/internal/config"
-	"github.com/simtabi/vigil/internal/control"
-	"github.com/simtabi/vigil/internal/netcheck"
-	"github.com/simtabi/vigil/internal/schedule"
-	"github.com/simtabi/vigil/internal/service"
+	"github.com/simtabi/vigil/src/internal/cli/ui"
+	"github.com/simtabi/vigil/src/internal/config"
+	"github.com/simtabi/vigil/src/internal/control"
+	"github.com/simtabi/vigil/src/internal/netcheck"
+	"github.com/simtabi/vigil/src/internal/schedule"
+	"github.com/simtabi/vigil/src/internal/service"
 	"github.com/spf13/cobra"
 )
 

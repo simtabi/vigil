@@ -7,10 +7,10 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/simtabi/vigil/internal/config"
-	"github.com/simtabi/vigil/internal/control"
-	"github.com/simtabi/vigil/internal/schedule"
-	"github.com/simtabi/vigil/internal/selfupdate"
+	"github.com/simtabi/vigil/src/internal/config"
+	"github.com/simtabi/vigil/src/internal/control"
+	"github.com/simtabi/vigil/src/internal/schedule"
+	"github.com/simtabi/vigil/src/internal/selfupdate"
 )
 
 // --- helpers ---

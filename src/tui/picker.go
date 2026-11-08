@@ -6,7 +6,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/simtabi/vigil/internal/tz"
+	"github.com/simtabi/vigil/src/internal/tz"
 )
 
 // pickerWindow is how many list rows are visible at once (the list scrolls).

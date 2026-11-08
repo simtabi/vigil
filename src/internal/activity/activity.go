@@ -6,7 +6,7 @@ package activity
 import (
 	"context"
 
-	"github.com/simtabi/vigil/internal/config"
+	"github.com/simtabi/vigil/src/internal/config"
 )
 
 // Activator is one strategy for keeping the session active.

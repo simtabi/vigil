@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/simtabi/vigil/internal/config"
+	"github.com/simtabi/vigil/src/internal/config"
 )
 
 func TestEnsureConfig(t *testing.T) {

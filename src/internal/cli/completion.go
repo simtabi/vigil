@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/simtabi/vigil/internal/config"
-	"github.com/simtabi/vigil/internal/tz"
+	"github.com/simtabi/vigil/src/internal/config"
+	"github.com/simtabi/vigil/src/internal/tz"
 	"github.com/spf13/cobra"
 )
 

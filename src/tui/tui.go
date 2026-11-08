@@ -16,12 +16,12 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/simtabi/vigil/internal/brand"
-	"github.com/simtabi/vigil/internal/config"
-	"github.com/simtabi/vigil/internal/control"
-	"github.com/simtabi/vigil/internal/netcheck"
-	"github.com/simtabi/vigil/internal/schedule"
-	"github.com/simtabi/vigil/internal/selfupdate"
+	"github.com/simtabi/vigil/src/internal/brand"
+	"github.com/simtabi/vigil/src/internal/config"
+	"github.com/simtabi/vigil/src/internal/control"
+	"github.com/simtabi/vigil/src/internal/netcheck"
+	"github.com/simtabi/vigil/src/internal/schedule"
+	"github.com/simtabi/vigil/src/internal/selfupdate"
 )
 
 // Options configures the TUI with resolved paths for the active scope.

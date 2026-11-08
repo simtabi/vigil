@@ -5,7 +5,7 @@ package schedule
 import (
 	"time"
 
-	"github.com/simtabi/vigil/internal/config"
+	"github.com/simtabi/vigil/src/internal/config"
 )
 
 // weekdayAbbrev maps a time.Weekday to the 3-letter form used in config.

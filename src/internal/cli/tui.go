@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"github.com/simtabi/vigil/tui"
+	"github.com/simtabi/vigil/src/tui"
 	"github.com/spf13/cobra"
 )
 

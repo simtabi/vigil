@@ -6,10 +6,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/simtabi/vigil/internal/config"
-	"github.com/simtabi/vigil/internal/control"
-	"github.com/simtabi/vigil/internal/engine"
-	"github.com/simtabi/vigil/internal/service"
+	"github.com/simtabi/vigil/src/internal/config"
+	"github.com/simtabi/vigil/src/internal/control"
+	"github.com/simtabi/vigil/src/internal/engine"
+	"github.com/simtabi/vigil/src/internal/service"
 	"github.com/spf13/cobra"
 	"gopkg.in/natefinch/lumberjack.v2"
 )

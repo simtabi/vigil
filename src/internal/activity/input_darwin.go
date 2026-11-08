@@ -67,7 +67,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/simtabi/vigil/internal/config"
+	"github.com/simtabi/vigil/src/internal/config"
 )
 
 const inputSupported = true

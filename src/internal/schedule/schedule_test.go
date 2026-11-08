@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/simtabi/vigil/internal/config"
+	"github.com/simtabi/vigil/src/internal/config"
 )
 
 func cfgWith(tz string, always bool, win ...config.Window) config.Config {

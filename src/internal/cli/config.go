@@ -6,8 +6,8 @@ import (
 	"os/exec"
 	"runtime"
 
-	"github.com/simtabi/vigil/internal/cli/ui"
-	"github.com/simtabi/vigil/internal/config"
+	"github.com/simtabi/vigil/src/internal/cli/ui"
+	"github.com/simtabi/vigil/src/internal/config"
 	"github.com/spf13/cobra"
 )
 

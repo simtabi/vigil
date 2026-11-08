@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/kardianos/service"
-	"github.com/simtabi/vigil/internal/config"
-	"github.com/simtabi/vigil/internal/engine"
+	"github.com/simtabi/vigil/src/internal/config"
+	"github.com/simtabi/vigil/src/internal/engine"
 )
 
 // serviceName is the OS-level service/task identifier.

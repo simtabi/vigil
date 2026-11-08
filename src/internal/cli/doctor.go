@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/simtabi/vigil/internal/activity"
-	"github.com/simtabi/vigil/internal/config"
-	"github.com/simtabi/vigil/internal/netcheck"
+	"github.com/simtabi/vigil/src/internal/activity"
+	"github.com/simtabi/vigil/src/internal/config"
+	"github.com/simtabi/vigil/src/internal/netcheck"
 	"github.com/spf13/cobra"
 )
 

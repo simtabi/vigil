@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/simtabi/vigil/internal/cli/ui"
-	"github.com/simtabi/vigil/internal/config"
-	"github.com/simtabi/vigil/internal/graph"
+	"github.com/simtabi/vigil/src/internal/cli/ui"
+	"github.com/simtabi/vigil/src/internal/config"
+	"github.com/simtabi/vigil/src/internal/graph"
 	"github.com/spf13/cobra"
 )
 

@@ -6,10 +6,10 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/simtabi/vigil/internal/cli/ui"
-	"github.com/simtabi/vigil/internal/config"
-	"github.com/simtabi/vigil/internal/selfupdate"
-	"github.com/simtabi/vigil/internal/service"
+	"github.com/simtabi/vigil/src/internal/cli/ui"
+	"github.com/simtabi/vigil/src/internal/config"
+	"github.com/simtabi/vigil/src/internal/selfupdate"
+	"github.com/simtabi/vigil/src/internal/service"
 	"github.com/spf13/cobra"
 )
 

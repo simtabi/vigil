@@ -5,7 +5,7 @@ package activity
 import (
 	"errors"
 
-	"github.com/simtabi/vigil/internal/config"
+	"github.com/simtabi/vigil/src/internal/config"
 )
 
 const inputSupported = false

@@ -8,7 +8,7 @@ import (
 	"sync"
 
 	"github.com/bendahl/uinput"
-	"github.com/simtabi/vigil/internal/config"
+	"github.com/simtabi/vigil/src/internal/config"
 )
 
 const inputSupported = true

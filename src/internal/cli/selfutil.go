@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/simtabi/vigil/internal/cli/ui"
-	"github.com/simtabi/vigil/internal/config"
-	"github.com/simtabi/vigil/internal/service"
+	"github.com/simtabi/vigil/src/internal/cli/ui"
+	"github.com/simtabi/vigil/src/internal/config"
+	"github.com/simtabi/vigil/src/internal/service"
 )
 
 // binName is the platform binary filename.

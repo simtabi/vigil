@@ -5,8 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/simtabi/vigil/internal/config"
-	"github.com/simtabi/vigil/internal/graph"
+	"github.com/simtabi/vigil/src/internal/config"
+	"github.com/simtabi/vigil/src/internal/graph"
 )
 
 // graphActivator keeps a sticky preferred presence via Microsoft Graph. It
