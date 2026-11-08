@@ -1,4 +1,4 @@
-# Single source of truth for release targets, read by both scripts/build-all.sh
+# Single source of truth for release targets, read by both src/scripts/build-all.sh
 # and .github/workflows/build-binaries.yml. Columns: GOOS GOARCH [GOARM]
 # (GOARM only applies to GOARCH=arm). darwin targets build with cgo on macOS
 # runners; everything else cross-compiles CGO-free from any host.

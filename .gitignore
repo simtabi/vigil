@@ -1,7 +1,15 @@
-# Binaries
+# Generated build output. build/ keeps its tracked inputs (targets.txt,
+# nfpm.yaml); everything else in it is generated, one folder per OS (see the
+# Makefile and src/scripts/build-all.sh).
+/build/*
+!/build/targets.txt
+!/build/nfpm.yaml
+# GoReleaser's scratch dist (src/.goreleaser.yaml `dist:`).
+/.cache/
+
+# Output of the layout before the module moved into src/.
 /vigil
 /dist/
-/build/dist/
 /out/
 *.exe
 *.dll

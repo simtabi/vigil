@@ -1,23 +1,31 @@
 version: 2
 project_name: vigil
 
-# Keep all build tooling under a single build/ folder: inputs (targets.txt,
-# nfpm.yaml) at build/ root, generated artifacts under build/dist/ (gitignored).
-dist: build/dist
+# Run from the repository root: goreleaser ... --config src/.goreleaser.yaml.
+# The module lives in src/ (builds[].dir), and archive files (LICENSE, README,
+# CHANGELOG) are read from the root, which a config run from inside src/ cannot
+# reach.
+#
+# GoReleaser writes into a scratch dist, .cache/goreleaser/ (gitignored), never
+# into build/. build/ holds one folder per OS and nothing else; `make cross` and
+# `make dist` write it with src/scripts/build-all.sh. A dispatched release
+# uploads straight from this dist, so release assets stay flat.
+dist: .cache/goreleaser
 
 before:
   hooks:
-    - go mod tidy
+    - go -C src mod tidy
 
 # One binary cross-compiled to the full OS/arch matrix (matching build/targets.txt
-# and scripts/build-all.sh). Every non-darwin target is a static, CGO-free binary
+# and src/scripts/build-all.sh). Every non-darwin target is a static, CGO-free binary
 # (CGO_ENABLED=0). darwin is the exception: the input engine
-# (internal/activity/input_darwin.go) links CoreGraphics/IOKit via cgo, so the two
+# (src/internal/activity/input_darwin.go) links CoreGraphics/IOKit via cgo, so the two
 # darwin targets build with CGO_ENABLED=1 — which is why this release runs on a
 # macOS runner (see .github/workflows/release.yml). -trimpath makes builds
 # reproducible and -s -w strips debug info for smaller artifacts.
 builds:
   - id: vigil
+    dir: src
     main: ./cmd/vigil
     binary: vigil
     env:
@@ -62,9 +70,9 @@ builds:
     mod_timestamp: "{{ .CommitTimestamp }}"
     ldflags:
       - -s -w
-      - -X github.com/simtabi/vigil/internal/cli.version={{ .Version }}
-      - -X github.com/simtabi/vigil/internal/cli.commit={{ .Commit }}
-      - -X github.com/simtabi/vigil/internal/cli.date={{ .CommitDate }}
+      - -X github.com/simtabi/vigil/src/internal/cli.version={{ .Version }}
+      - -X github.com/simtabi/vigil/src/internal/cli.commit={{ .Commit }}
+      - -X github.com/simtabi/vigil/src/internal/cli.date={{ .CommitDate }}
 
 # A single macOS universal binary (amd64 + arm64) alongside the per-arch ones.
 universal_binaries:

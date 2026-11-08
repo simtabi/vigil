@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Build metadata, overridable via -ldflags "-X .../cmd.version=...".
+// Build metadata, overridable via -ldflags "-X github.com/simtabi/vigil/src/internal/cli.version=...".
 var (
 	version = "dev"
 	commit  = "none"
