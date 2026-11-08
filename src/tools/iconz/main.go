@@ -1,8 +1,8 @@
-// Command iconz rasterizes ../../assets/vigil.svg into PNG brand icons and
+// Command iconz rasterizes ../../../assets/vigil.svg into PNG brand icons and
 // generates the Windows resource objects (.syso) that embed the icon + version
 // info into the vigil.exe binary.
 //
-//	cd tools/iconz && go run .
+//	cd src/tools/iconz && go run .   (or: make icons)
 package main
 
 import (
@@ -18,7 +18,7 @@ import (
 	"github.com/tc-hib/winres/version"
 )
 
-const svgPath = "../../assets/vigil.svg"
+const svgPath = "../../../assets/vigil.svg"
 
 var iconSizes = []int{16, 32, 48, 64, 128, 256, 512}
 
@@ -28,7 +28,7 @@ func main() {
 		fail(err)
 	}
 
-	outDir := "../../assets/icons"
+	outDir := "../../../assets/icons"
 	if err := os.MkdirAll(outDir, 0o755); err != nil {
 		fail(err)
 	}
