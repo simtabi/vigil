@@ -61,13 +61,13 @@ schedule, keeps the session non-idle with one of two **engines**:
 
 vigil is built from source: binary releases are on hold, so there is no
 download, install-script, package-manager or `go install` channel to use. You
-need Go (the version `go.mod` names), `git` and `make`; macOS also needs the
+need Go (the version `src/go.mod` names), `git` and `make`; macOS also needs the
 Xcode Command Line Tools, because the input backend uses cgo.
 
 ```bash
 git clone https://github.com/simtabi/vigil ~/src/vigil
-make -C ~/src/vigil build        # -> ~/src/vigil/vigil
-~/src/vigil/vigil self install   # copies it to ~/.local/bin
+make -C ~/src/vigil build                     # -> ~/src/vigil/build/<os>/vigil
+~/src/vigil/build/macos/vigil self install    # Linux: build/linux/vigil; copies it to ~/.local/bin
 vigil doctor
 ```
 
@@ -114,7 +114,7 @@ source build from git:
 
 ```bash
 git -C ~/src/vigil pull --ff-only
-make -C ~/src/vigil build && ~/src/vigil/vigil self install
+make -C ~/src/vigil build && ~/src/vigil/build/macos/vigil self install   # Linux: build/linux/vigil
 vigil restart            # if the background service is installed
 ```
 
@@ -134,7 +134,7 @@ vigil uninstall          # stop + remove the service (keeps the binary)
 Remove everything (service + binary, `--purge` also deletes config/data):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/simtabi/vigil/main/scripts/uninstall.sh | sh
+curl -fsSL https://raw.githubusercontent.com/simtabi/vigil/main/src/scripts/uninstall.sh | sh
 # or: vigil self uninstall --purge
 ```
 

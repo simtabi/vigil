@@ -4,20 +4,23 @@
 
 vigil is built from source. Binary releases are on hold until the maintainer
 decides otherwise, so this page offers no download, install-script,
-package-manager or `go install` path. You need Go (the version `go.mod` names),
-`git` and `make`.
+package-manager or `go install` path. You need Go (the version `src/go.mod`
+names), `git` and `make`.
 
 ```bash
 git clone https://github.com/simtabi/vigil ~/src/vigil
-make -C ~/src/vigil build        # -> ~/src/vigil/vigil
-~/src/vigil/vigil self install   # copies it to ~/.local/bin (see below)
+make -C ~/src/vigil build                     # -> ~/src/vigil/build/<os>/vigil
+~/src/vigil/build/macos/vigil self install    # Linux: build/linux/vigil; copies it to ~/.local/bin
 vigil doctor
 ```
 
-`install -m 0755 ~/src/vigil/vigil ~/.local/bin/vigil`, or any directory on
-`PATH`, works in place of `vigil self install`. On Windows, clone the same way
-and build with `go -C $HOME\src\vigil build -o vigil.exe ./cmd/vigil` from
-PowerShell, then run `$HOME\src\vigil\vigil.exe self install`.
+`make build` writes `build/macos/vigil` on a Mac and `build/linux/vigil` on
+Linux. `install -m 0755 ~/src/vigil/build/<os>/vigil ~/.local/bin/vigil`, or any
+directory on `PATH`, works in place of `vigil self install`. On Windows, clone the
+same way and build with
+`go -C $HOME\src\vigil\src build -o ..\build\windows\vigil.exe ./cmd/vigil` from
+PowerShell (the Go module lives in `src/`), then run
+`$HOME\src\vigil\build\windows\vigil.exe self install`.
 
 > **macOS** needs a C toolchain (Xcode Command Line Tools) because the macOS
 > input backend uses cgo. Windows and Linux are pure Go.
@@ -35,7 +38,7 @@ make -C ~/src/vigil build
 ```bash
 git -C ~/src/vigil pull --ff-only
 make -C ~/src/vigil build
-~/src/vigil/vigil self install
+~/src/vigil/build/macos/vigil self install    # Linux: build/linux/vigil
 vigil restart                    # if the background service is installed
 ```
 
@@ -49,7 +52,7 @@ from a branch is still identifiable.
 [GitHub Releases](https://github.com/simtabi/vigil/releases). Those stay where
 they are and an existing install keeps working, but no new release is published
 while binary releases are on hold: build from source to get anything newer. The
-install scripts in `scripts/` remain in the tree, but they download the latest
+install scripts in `src/scripts/` remain in the tree, but they download the latest
 published release, so they cannot install anything newer than 0.7.0. For
 reference, those archives are named `vigil_<os>_<arch>` (macOS uses the
 `macos` token):
@@ -66,16 +69,18 @@ reference, those archives are named `vigil_<os>_<arch>` (macOS uses the
 
 ## Building all targets yourself
 
-`make dist` (or `./scripts/build-all.sh [version]`) builds ready-to-run binaries
-for every target in `build/targets.txt`. The `dist/` root holds the bare,
-self-describing binaries; all archives + deb/rpm are grouped under
-`dist/archives/`:
+`make cross` (or `./src/scripts/build-all.sh [version]`) builds ready-to-run
+binaries for every target in `build/targets.txt` into `build/`, one folder per OS
+(`macos`, never `darwin`). `make dist` does the same and adds the archives (and,
+with `VIGIL_PACKAGES=1` and `nfpm` on `PATH`, deb/rpm) under `build/archives/`:
 
 ```
-dist/
-  vigil_macos_arm64   vigil_linux_amd64   vigil_windows_amd64.exe   vigil_macos_universal   …
-  checksums.txt
-  archives/  vigil_<os>_<arch>.tar.gz · vigil_windows_<arch>.zip · *.deb · *.rpm · checksums.txt
+build/
+  checksums.txt   # {os}/{file}, so: cd build && shasum -a 256 -c checksums.txt
+  macos/    vigil_macos_arm64  vigil_macos_amd64  vigil_macos_universal
+  linux/    vigil_linux_amd64  vigil_linux_arm64  vigil_linux_armv7  …
+  windows/  vigil_windows_amd64.exe  …
+  archives/ vigil_<os>_<arch>.tar.gz · vigil_windows_<arch>.zip · *.deb · *.rpm · checksums.txt
 ```
 
 It builds whatever your local toolchain supports (macOS targets need a C
@@ -116,12 +121,12 @@ later:
 
 ```bash
 # macOS/Linux
-curl -fsSL https://raw.githubusercontent.com/simtabi/vigil/main/scripts/uninstall.sh | sh
-curl -fsSL .../scripts/uninstall.sh | sh -s -- --purge   # also delete config + runtime data
+curl -fsSL https://raw.githubusercontent.com/simtabi/vigil/main/src/scripts/uninstall.sh | sh
+curl -fsSL .../src/scripts/uninstall.sh | sh -s -- --purge   # also delete config + runtime data
 
 # Windows (piped form can't pass flags)
-irm https://raw.githubusercontent.com/simtabi/vigil/main/scripts/uninstall.ps1 | iex
-./scripts/uninstall.ps1 -Purge                            # local file: also delete config + data
+irm https://raw.githubusercontent.com/simtabi/vigil/main/src/scripts/uninstall.ps1 | iex
+./src/scripts/uninstall.ps1 -Purge                            # local file: also delete config + data
 
 # Or directly, on any OS:
 vigil self uninstall            # service + binary
@@ -129,7 +134,9 @@ vigil self uninstall --purge    # also config + runtime data
 ```
 
 `--purge` (and `-Purge`) additionally delete the config and runtime/state
-directories; without it, those are left in place.
+directories; without it, those are left in place. The scripts moved from
+`scripts/` to `src/scripts/`; the old `main/scripts/…` URLs, which earlier
+installers printed, still work and forward to the new ones.
 
 ## Choosing engine + scope
 

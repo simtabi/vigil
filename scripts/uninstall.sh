@@ -1,33 +1,18 @@
-#!/usr/bin/env bash
-# Remove vigil on macOS/Linux: stops + removes the background service and deletes
-# the binary (delegates to `vigil self uninstall`, which knows the per-OS teardown).
+#!/bin/sh
+# Deprecated location, kept so the published one-liner keeps working:
 #
 #   curl -fsSL https://raw.githubusercontent.com/simtabi/vigil/main/scripts/uninstall.sh | sh
-#   ./scripts/uninstall.sh            # remove service + binary
-#   ./scripts/uninstall.sh --purge    # also delete config and runtime data
+#
+# The script moved to src/scripts/uninstall.sh when the Go module moved into src/,
+# and installers from 0.1.0 to 0.7.0 printed this URL. This file only forwards
+# there, with every argument, run locally or piped. It can go in the first
+# release after binary releases resume and the README has named the new URL
+# for at least one release.
 set -eu
-
-PURGE=0
-for a in "$@"; do
-  case "$a" in
-    --purge) PURGE=1 ;;
-    *) echo "unknown option: $a" >&2; exit 1 ;;
-  esac
-done
-
-vigil="$(command -v vigil || true)"
-if [ -z "$vigil" ]; then
-  for p in "$HOME/.local/bin/vigil" /usr/local/bin/vigil; do
-    [ -x "$p" ] && vigil="$p" && break
-  done
-fi
-if [ -z "$vigil" ]; then
-  echo "vigil not found on PATH or in the usual install dirs; nothing to do." >&2
-  exit 1
-fi
-
-cmd="\"$vigil\" self uninstall --yes"
-[ "$PURGE" = "1" ] && cmd="$cmd --purge"
-echo "Removing vigil (service + binary)..."
-eval "$cmd"
-echo "Done."
+case "$0" in
+  *uninstall.sh)
+    here=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+    exec bash "$here/../src/scripts/uninstall.sh" "$@"
+    ;;
+esac
+curl -fsSL https://raw.githubusercontent.com/simtabi/vigil/main/src/scripts/uninstall.sh | sh -s -- "$@"

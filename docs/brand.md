@@ -9,15 +9,15 @@ plus the Teams "available" dot.
 |------|-----|
 | `assets/vigil.svg` | Source of truth (hand-authored, scalable). |
 | `assets/icons/vigil_{16..512}.png` | Rasterized PNGs for docs, READMEs, packaging. |
-| `cmd/vigil/rsrc_windows_*.syso` | Windows resource objects — embed the icon + version info into `vigil.exe` (auto-linked by `go build`; ignored on other OSes). |
+| `src/cmd/vigil/rsrc_windows_*.syso` | Windows resource objects — embed the icon + version info into `vigil.exe` (auto-linked by `go build`; ignored on other OSes). |
 
 Regenerate everything from the SVG with:
 
 ```bash
-make icons        # = cd tools/iconz && go run .
+make icons        # = cd src/tools/iconz && go run .
 ```
 
-`tools/iconz` is a separate throwaway module (oksvg/rasterx + tc-hib/winres) so the
+`src/tools/iconz` is a separate throwaway module (oksvg/rasterx + tc-hib/winres) so the
 main module's dependencies stay clean. Editing `assets/vigil.svg` then running
 `make icons` rewrites the PNGs and the `.syso` files; commit the results.
 
@@ -30,7 +30,7 @@ brand assets in docs and package metadata instead.
 `vigil version` prints a masthead with the name, tagline, version/commit/date,
 author, contact, and URLs. It renders a colored rounded box on a terminal and a
 plain ASCII box when piped or under `NO_COLOR` (so logs stay clean). `--json` is
-unaffected. The identity values live in one place: `internal/brand`.
+unaffected. The identity values live in one place: `src/internal/brand`.
 
 ## Icons & status in the TUI
 

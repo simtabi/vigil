@@ -1,22 +1,20 @@
-# Remove vigil on Windows: stops + removes the logon task / service and deletes the
-# binary (delegates to `vigil self uninstall`).
+# Deprecated location, kept so the published one-liner keeps working:
 #
 #   irm https://raw.githubusercontent.com/simtabi/vigil/main/scripts/uninstall.ps1 | iex
-#   ./scripts/uninstall.ps1 -Purge    # also delete config and runtime data
+#
+# The script moved to src/scripts/uninstall.ps1 when the Go module moved into
+# src/, and installers from 0.1.0 to 0.7.0 printed this URL. This file only
+# forwards there, with its parameters, run locally or through iex. It can go in
+# the first release after binary releases resume and the README has named the
+# new URL for at least one release.
 
 param([switch]$Purge)
 
 $ErrorActionPreference = "Stop"
-
-$cmd = Get-Command vigil -ErrorAction SilentlyContinue
-$vigil = if ($cmd) { $cmd.Source } else { $null }
-if (-not $vigil) {
-    $cand = Join-Path "$env:LOCALAPPDATA\Programs\vigil" "vigil.exe"
-    if (Test-Path $cand) { $vigil = $cand }
+$local = if ($PSScriptRoot) { Join-Path $PSScriptRoot "..\src\scripts\uninstall.ps1" } else { $null }
+if ($local -and (Test-Path $local)) {
+    & $local @PSBoundParameters
+    return
 }
-if (-not $vigil) { throw "vigil not found on PATH or in the usual install dir." }
-
-Write-Host "Removing vigil (service + binary)..."
-if ($Purge) { & $vigil self uninstall --yes --purge }
-else { & $vigil self uninstall --yes }
-Write-Host "Done."
+$script = Invoke-RestMethod "https://raw.githubusercontent.com/simtabi/vigil/main/src/scripts/uninstall.ps1"
+& ([scriptblock]::Create($script)) @PSBoundParameters

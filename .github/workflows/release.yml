@@ -16,6 +16,12 @@ name: Release
 #
 # It stays tag-driven: GoReleaser reads the version from the ref it is run
 # against, and the first step refuses a ref that is not a v[0-9]* tag.
+# src/cmd/vigil's TestReleaseRunsOnlyOnAConfirmedDispatch fails if an automatic
+# trigger comes back or the refusal stops being the first step.
+#
+# The Go module lives in src/ (github.com/simtabi/vigil/src), so GoReleaser runs
+# from the repository root with --config src/.goreleaser.yaml and writes its
+# scratch dist to .cache/goreleaser/, never into build/.
 on:
   workflow_dispatch:
     inputs:
@@ -32,9 +38,15 @@ concurrency:
 permissions:
   contents: read
 
+# Our own modules are fetched from git, never through proxy.golang.org or
+# sum.golang.org, so the build itself is not what feeds the public proxy a tag.
+env:
+  GOPRIVATE: github.com/simtabi/*
+  GONOSUMDB: github.com/simtabi/*
+
 jobs:
   goreleaser:
-    # macOS, not Linux: vigil's input engine (internal/activity/input_darwin.go)
+    # macOS, not Linux: vigil's input engine (src/internal/activity/input_darwin.go)
     # links CoreGraphics/IOKit via cgo, so the darwin targets need the macOS SDK
     # and can't be cross-compiled CGO-free. The arm64 runner builds darwin
     # natively and cross-builds the CGO-free linux/windows/bsd matrix in one job.
@@ -65,20 +77,39 @@ jobs:
 
       - uses: actions/setup-go@v7
         with:
-          go-version-file: go.mod
+          go-version-file: src/go.mod
           cache: true
+          cache-dependency-path: src/go.sum
 
       # syft powers GoReleaser's SBOM generation.
       - uses: anchore/sbom-action/download-syft@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c # v0.24.3
 
+      # `go install` needs a tag named after the module's subdirectory: the
+      # module is github.com/simtabi/vigil/src, so Go resolves src/vX.Y.Z and
+      # ignores vX.Y.Z. OSS GoReleaser rejects the prefixed tag as non-semver,
+      # so the release runs off vX.Y.Z and mirrors src/vX.Y.Z onto the same
+      # commit here, where it cannot be forgotten. This workflow starts on no
+      # tag push, so pushing src/... starts no second run. A re-run finds the
+      # tag already there and leaves it alone: a public tag is never moved.
+      - name: Mirror the tag Go resolves the module through
+        run: |
+          alias_tag="src/${GITHUB_REF_NAME}"
+          if git rev-parse -q --verify "refs/tags/${alias_tag}" >/dev/null; then
+            echo "${alias_tag} already exists"
+          else
+            git tag "${alias_tag}" "${GITHUB_REF_NAME}^{commit}"
+            git push origin "refs/tags/${alias_tag}"
+            echo "pushed ${alias_tag}"
+          fi
+
       - name: Extract CHANGELOG section for this tag
-        run: ./scripts/extract-changelog.sh "${GITHUB_REF_NAME}" > release_notes.md
+        run: ./src/scripts/extract-changelog.sh "${GITHUB_REF_NAME}" > release_notes.md
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@a4f02ab5355a589de60d917a659ce617ed19b3de # v7.3.0
         with:
           version: latest
-          args: release --clean --release-notes=release_notes.md
+          args: release --clean --config src/.goreleaser.yaml --release-notes=release_notes.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
@@ -106,4 +137,4 @@ jobs:
       - name: Attest build provenance
         uses: actions/attest-build-provenance@v4
         with:
-          subject-checksums: build/dist/checksums.txt
+          subject-checksums: .cache/goreleaser/checksums.txt

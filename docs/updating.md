@@ -10,8 +10,8 @@
 
 ```bash
 git -C ~/src/vigil pull --ff-only
-make -C ~/src/vigil build
-~/src/vigil/vigil self install   # replace the binary on PATH
+make -C ~/src/vigil build        # -> ~/src/vigil/build/<os>/vigil
+~/src/vigil/build/macos/vigil self install   # replace the binary on PATH (Linux: build/linux/vigil)
 vigil restart                    # if the background service is installed
 ```
 
@@ -78,7 +78,7 @@ to the right tool:
 | Homebrew | `brew upgrade vigil` |
 | Scoop | `scoop update vigil` |
 | deb/rpm | `apt upgrade` / `dnf upgrade` |
-| `go install` | re-run `go install …/cmd/vigil@latest` |
+| `go install` (0.7.0 and earlier) | frozen at 0.7.0: switch to a [source build](#from-source-the-current-way-to-update) |
 
 The interactive TUI shows an "update available" banner only for standalone
 installs.
