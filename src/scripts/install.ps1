@@ -40,7 +40,7 @@ catch {
     if (Get-Command go -ErrorAction SilentlyContinue) {
         Write-Host "Building from source..."
         $env:GOBIN = $Prefix
-        go install "github.com/$repo/cmd/vigil@latest"
+        go install "github.com/$repo/src/cmd/vigil@latest"
     }
     else { throw "Go not found and download failed." }
 }
