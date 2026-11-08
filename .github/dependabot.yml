@@ -1,7 +1,8 @@
 version: 2
 updates:
+  # The Go module lives in src/ (github.com/simtabi/vigil/src).
   - package-ecosystem: gomod
-    directory: /
+    directory: /src
     schedule:
       interval: weekly
       day: monday
@@ -26,7 +27,7 @@ updates:
         patterns: ["*"]
         update-types: [minor, patch]
   - package-ecosystem: gomod
-    directory: /tools/iconz
+    directory: /src/tools/iconz
     schedule:
       interval: weekly
       day: monday
