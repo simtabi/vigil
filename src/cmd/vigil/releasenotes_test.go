@@ -75,7 +75,8 @@ func TestReleaseRunsOnAVersionTagOrOnRequest(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	wf := string(raw)
+	// A Windows checkout may carry CRLF line endings; the structure is read line by line.
+	wf := strings.ReplaceAll(string(raw), "\r\n", "\n")
 
 	on := yamlBlock(wf, "", "on")
 	if on == "" {
