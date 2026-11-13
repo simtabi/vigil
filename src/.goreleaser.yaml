@@ -8,8 +8,8 @@ project_name: vigil
 #
 # GoReleaser writes into a scratch dist, .cache/goreleaser/ (gitignored), never
 # into build/. build/ holds one folder per OS and nothing else; `make cross` and
-# `make dist` write it with src/scripts/build-all.sh. A dispatched release
-# uploads straight from this dist, so release assets stay flat.
+# `make dist` write it with src/scripts/build-all.sh. A release (simtabi/.github's
+# go-release.yml) uploads straight from this dist, so release assets stay flat.
 dist: .cache/goreleaser
 
 before:
@@ -136,79 +136,11 @@ sboms:
   - id: archive
     artifacts: archive
 
-homebrew_casks:
-  - name: vigil
-    ids: [archive]
-    repository:
-      owner: simtabi
-      name: homebrew-tap
-      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
-      # Write deploy key on simtabi/homebrew-tap (secret HOMEBREW_TAP_DEPLOY_KEY): reaches that
-      # one repository only. Set, git pushes with it; unset, the URL is empty and the token
-      # path above runs. Measured with GoReleaser 2.18.3.
-      git:
-        url: '{{ if envOrDefault "HOMEBREW_TAP_DEPLOY_KEY" "" }}git@github.com:simtabi/homebrew-tap.git{{ end }}'
-        private_key: '{{ envOrDefault "HOMEBREW_TAP_DEPLOY_KEY" "" }}'
-    directory: Casks
-    homepage: "https://opensource.simtabi.com/products/vigil"
-    description: "Keep Microsoft Teams active on a configurable schedule."
-    hooks:
-      post:
-        install: |
-          if OS.mac?
-            system_command "/usr/bin/xattr",
-              args: ["-dr", "com.apple.quarantine", "#{staged_path}/vigil"],
-              sudo: false
-          end
-
-scoops:
-  - name: vigil
-    ids: [archive]
-    repository:
-      owner: simtabi
-      name: scoop-bucket
-      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
-      # Write deploy key on simtabi/scoop-bucket (secret SCOOP_BUCKET_DEPLOY_KEY): reaches that
-      # one repository only. Set, git pushes with it; unset, the URL is empty and the token
-      # path above runs. Measured with GoReleaser 2.18.3.
-      git:
-        url: '{{ if envOrDefault "SCOOP_BUCKET_DEPLOY_KEY" "" }}git@github.com:simtabi/scoop-bucket.git{{ end }}'
-        private_key: '{{ envOrDefault "SCOOP_BUCKET_DEPLOY_KEY" "" }}'
-    directory: bucket
-    homepage: "https://opensource.simtabi.com/products/vigil"
-    description: "Keep Microsoft Teams active on a configurable schedule."
-    license: MIT
-    # Scoop publishes on its own switch: SKIP_SCOOP, else SKIP_WINDOWS_PKGS, else skipped. `or` takes the
-    # first non-empty value, so a variable CI sets to empty falls through instead of publishing
-    # (envOrDefault returns an empty value as set; measured with GoReleaser 2.18.3).
-    skip_upload: '{{ or (envOrDefault "SKIP_SCOOP" "") (envOrDefault "SKIP_WINDOWS_PKGS" "") "true" }}'
-
-# Winget (Microsoft's default Windows package manager). Publishes a manifest to
-# a simtabi/winget-pkgs fork and opens a PR to microsoft/winget-pkgs. Package id
-# is Simtabi.vigil. Gated behind SKIP_WINDOWS_PKGS until the fork exists.
-winget:
-  - name: vigil
-    publisher: Simtabi
-    ids: [archive]
-    license: MIT
-    homepage: "https://opensource.simtabi.com/products/vigil"
-    short_description: "Keep Microsoft Teams active on a configurable schedule."
-    description: "Keep Microsoft Teams active on a configurable schedule."
-    publisher_url: "https://simtabi.com"
-    release_notes_url: "https://github.com/simtabi/vigil/releases/tag/{{ .Tag }}"
-    repository:
-      owner: simtabi
-      name: winget-pkgs
-      branch: "vigil-{{ .Version }}"
-      token: "{{ .Env.TAP_GITHUB_TOKEN }}"
-      pull_request:
-        enabled: true
-        draft: false
-        base:
-          owner: microsoft
-          name: winget-pkgs
-          branch: master
-    skip_upload: '{{ envOrDefault "SKIP_WINDOWS_PKGS" "true" }}'
+# The GitHub release is the only channel (owner, 2026-11-13): no homebrew_casks, scoops, winget
+# or any other publishing block. vigil has no release on GitHub now and no entry in
+# simtabi/homebrew-tap or simtabi/scoop-bucket, so nothing there is left to freeze.
+# simtabi/.github's go-release.yml refuses this config if one of those blocks comes back, and
+# src/internal/release's TestGoReleaserPublishesNowhereElse fails first.
 
 release:
   github:
