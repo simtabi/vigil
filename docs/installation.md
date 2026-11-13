@@ -2,10 +2,36 @@
 
 ## Install
 
-vigil is built from source. Binary releases are on hold until the maintainer
-decides otherwise, so this page offers no download, install-script,
-package-manager or `go install` path. You need Go (the version `src/go.mod`
-names), `git` and `make`.
+Two ways, in this order: download the binary from the GitHub release, or build
+from source. This page offers no package-manager or `go install` path.
+
+### Download a release
+
+Download the binary for your platform from the
+[GitHub releases](https://github.com/simtabi/vigil/releases) (`vigil_<os>_<arch>`,
+e.g. `vigil_macos_universal`, `vigil_linux_amd64`), check it against the release's
+`checksums.txt`, and let it install itself:
+
+```bash
+gh release download --repo simtabi/vigil --pattern vigil_macos_universal --pattern checksums.txt
+shasum -a 256 -c checksums.txt --ignore-missing
+chmod +x vigil_macos_universal && ./vigil_macos_universal self install
+vigil doctor
+```
+
+The GitHub release is the only channel: there is no package-manager or
+`go install` path. GitHub lists no vigil release yet (checked 2026-11-13); until
+the first one under the current release workflow is published, build from source.
+
+Every asset in `checksums.txt` carries a build-provenance attestation:
+
+```bash
+gh attestation verify vigil_macos_universal --repo simtabi/vigil
+```
+
+### Build from source
+
+You need Go (the version `src/go.mod` names), `git` and `make`.
 
 ```bash
 git clone https://github.com/simtabi/vigil ~/src/vigil
@@ -46,16 +72,12 @@ Do not use `vigil upgrade` on a source build; see [updating.md](updating.md).
 `vigil version` reports the version `git describe` gave the build, so a build
 from a branch is still identifiable.
 
-### Earlier binary releases
+### Release assets
 
-0.1.0 to 0.7.0 were published as archives on
-[GitHub Releases](https://github.com/simtabi/vigil/releases). Those stay where
-they are and an existing install keeps working, but no new release is published
-while binary releases are on hold: build from source to get anything newer. The
-install scripts in `src/scripts/` remain in the tree, but they download the latest
-published release, so they cannot install anything newer than 0.7.0. For
-reference, those archives are named `vigil_<os>_<arch>` (macOS uses the
-`macos` token):
+Releases are published on [GitHub Releases](https://github.com/simtabi/vigil/releases)
+only; no Homebrew, Scoop or Winget manifest is published. The install scripts in
+`src/scripts/` download the latest published release. The archives are named
+`vigil_<os>_<arch>` (macOS uses the `macos` token):
 
 | Machine | Archive |
 |---------|---------|

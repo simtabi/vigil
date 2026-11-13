@@ -1,12 +1,11 @@
 # Updating
 
-> **Binary releases are on hold.** No new GitHub release is being published, so
-> `vigil upgrade` finds nothing newer than 0.7.0, the last published release.
-> To get anything newer, build from source and update from git (below). The
-> self-update mechanism described on this page is unchanged and still in the
-> binary; it will pick up releases again if they resume.
+> Binaries ship on the [GitHub release](https://github.com/simtabi/vigil/releases)
+> only. A release install updates with `vigil upgrade` (below), which reads the
+> latest GitHub release. GitHub lists no vigil release yet (checked 2026-11-13),
+> so until the first one is published, update a source build from git.
 
-## From source (the current way to update)
+## From source
 
 ```bash
 git -C ~/src/vigil pull --ff-only
@@ -69,16 +68,16 @@ the version you are already running.
 
 ## Package-manager installs
 
-No package-manager channel is updated while binary releases are on hold. If you
-installed through a package manager, `vigil upgrade` refuses and points you
-to the right tool:
+No package-manager channel is published: the GitHub release is the only one. If
+a binary sits under a package manager's path, `vigil upgrade` still refuses and
+points you to that tool:
 
 | Installed via | Update with |
 |---------------|-------------|
 | Homebrew | `brew upgrade vigil` |
 | Scoop | `scoop update vigil` |
 | deb/rpm | `apt upgrade` / `dnf upgrade` |
-| `go install` (0.7.0 and earlier) | frozen at 0.7.0: switch to a [source build](#from-source-the-current-way-to-update) |
+| `go install` (0.7.0 and earlier) | frozen at 0.7.0: switch to a release or a [source build](#from-source) |
 
 The interactive TUI shows an "update available" banner only for standalone
 installs.

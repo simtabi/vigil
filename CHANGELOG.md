@@ -15,19 +15,25 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   release download fails.
 
 ### Changed
-- **The `Release` workflow is disabled in Actions while binary releases are on
-  hold.** The tags `v0.1.0` through `v0.7.0` carry an older `release.yml` that a
-  manual dispatch would run with no confirmation step, and a disabled workflow
-  runs on no ref. `docs/release.md` gives the enable, dispatch and disable
-  commands for an approved release.
-- **Binary releases are on hold; the release workflow runs only on a confirmed
-  manual dispatch.** A tag push no longer starts GoReleaser. A release is
-  dispatched on a `v[0-9]*` tag with `-f confirm=release-go`
-  (`gh workflow run release.yml --repo simtabi/vigil --ref vX.Y.Z -f confirm=release-go`),
-  and the first step refuses anything else before a single artifact is built.
-  `TestReleaseRunsOnlyOnAConfirmedDispatch` fails if `release.yml` regains an
-  automatic trigger or loses the confirmation, or if the refusal stops being the
-  first step.
+- **Binaries ship on the GitHub release only, built on a version tag or on
+  request.** A pushed `vX.Y.Z` tag (or `vX.Y.Z-rc.N` pre-release) builds and
+  publishes the release, and
+  `gh workflow run release.yml --repo simtabi/vigil -f tag=vX.Y.Z` does the same
+  for a tag already pushed. `release.yml` is now a thin caller of simtabi/.github's
+  shared `go-release.yml`, run on `macos-latest` (the darwin targets need cgo) under
+  the `release` environment; the shared workflow checks the tag, takes the notes
+  from this file and reads the published body back, mirrors `src/vX.Y.Z`, runs
+  GoReleaser and attests provenance. This replaces the dispatch-only,
+  `-f confirm=release-go` workflow of this cycle, which never shipped, and its own
+  `gh release edit --notes-file` step. `TestReleaseRunsOnAVersionTagOrOnRequest`
+  and `TestReleaseInputsMatchTheRepository` fail if a trigger is added, the job
+  stops calling the shared workflow, or the runner, environment, alias tag, config
+  or changelog input drifts.
+- **The `Release` workflow stays disabled in Actions until the owner enables it.**
+  It was disabled on 2026-11-08 because a dispatch with `--ref` runs the workflow a
+  tag carries. The only version tag on GitHub now, `v0.1.0`, carries a dispatch-only
+  workflow that refuses to run without `-f confirm=release-go`; `docs/release.md`
+  gives the enable command.
 - **The Go module lives in `src/`.** `go.mod`, `go.sum`, `cmd/`, `internal/`,
   `tui/`, `tools/iconz`, `scripts/`, `.goreleaser.yaml` and `.golangci.yml` moved
   under `src/`, and the module path is now `github.com/simtabi/vigil/src`, as the
@@ -66,14 +72,21 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `brand.md` and `cli.md` give the new paths. They still say binary releases are
   on hold and build from source; `updating.md` no longer offers re-running
   `go install` and says that channel is frozen at 0.7.0.
-- **Building from source is the only documented install path.** The README and
-  `installation.md` no longer offer the install scripts, Homebrew, Scoop, deb/rpm,
-  release downloads or `go install`; they give a clone, `make build`,
-  `vigil self install`, how to pin a tag and update, and say the 0.1.0-0.7.0
-  release archives stay where they are but no new release is published.
-  `updating.md` says `vigil upgrade` finds nothing newer than 0.7.0 while
-  releases are on hold, and that it refuses to replace a source build with an
-  older release unless `--force` is given.
+- **Two install paths, in order: the GitHub release, then a build from source.**
+  The README and `installation.md` give the release download checked against
+  `checksums.txt` (and `gh attestation verify`), then a clone, `make build`,
+  `vigil self install`, how to pin a tag and update. No Homebrew, Scoop, Winget or
+  `go install` path is offered. `updating.md` says `vigil upgrade` reads the latest
+  GitHub release, and that it refuses to replace a source build with an older
+  release unless `--force` is given.
+
+### Removed
+- **Homebrew cask, Scoop and Winget publishing.** `src/.goreleaser.yaml` loses its
+  `homebrew_casks`, `scoops` and `winget` blocks, and `release.yml` the tap and
+  bucket deploy keys, `TAP_GITHUB_TOKEN` and the `SKIP_SCOOP` /
+  `SKIP_WINDOWS_PKGS` switches that fed them. `simtabi/homebrew-tap` and
+  `simtabi/scoop-bucket` hold no vigil entry, so nothing there is affected.
+  `TestGoReleaserPublishesNowhereElse` fails if a publishing block returns.
 
 ### Fixed
 - **`vigil upgrade` no longer replaces a newer build with an older release.**

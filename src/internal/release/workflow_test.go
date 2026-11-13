@@ -217,9 +217,9 @@ func TestNoContainerImage(t *testing.T) {
 // the elided `…/cmd/vigil` form the docs used for it.
 var goInstall = regexp.MustCompile("go install [^\\s`]*(github\\.com/|cmd/vigil)")
 
-// Releases are on hold, so the docs offer building from source only: no
-// `go install` of this module, which would also serve whatever the Go proxy
-// cached for a tag rather than the code in the checkout.
+// Binaries ship on the GitHub release only, so the docs offer the release
+// download or a build from source: no `go install` of this module, which would
+// serve whatever the Go proxy cached for a tag rather than the released code.
 func TestDocsOfferNoGoInstall(t *testing.T) {
 	root := repoRoot(t)
 	files := []string{filepath.Join(root, "README.md"), filepath.Join(root, "CONTRIBUTING.md")}
@@ -244,7 +244,7 @@ func TestDocsOfferNoGoInstall(t *testing.T) {
 	for _, f := range files {
 		if m := goInstall.FindString(readFile(t, f)); m != "" {
 			rel, _ := filepath.Rel(root, f)
-			t.Errorf("%s offers %q; while releases are on hold the docs build from source", rel, m)
+			t.Errorf("%s offers %q; the docs offer the GitHub release or a build from source", rel, m)
 		}
 	}
 }
@@ -270,26 +270,39 @@ func TestGoInstallPatternMatches(t *testing.T) {
 	}
 }
 
-// The module is github.com/simtabi/vigil/src, so Go resolves a version through
-// the src/vX.Y.Z tag and ignores vX.Y.Z. release.yml mirrors that alias onto the
-// release tag's commit before GoReleaser runs, and never moves one that exists.
-func TestReleaseMirrorsTheSrcTag(t *testing.T) {
+// The module is github.com/simtabi/vigil/src, so Go resolves a version through the src/vX.Y.Z tag
+// and ignores vX.Y.Z. The shared simtabi/.github go-release.yml mirrors that alias onto the release
+// tag's commit before GoReleaser runs, and never moves one that exists, as long as the caller
+// leaves module-alias-prefix at its default, src/. The caller must also keep this repository's
+// config, Go version file and changelog, run on macOS (the darwin targets need cgo and the macOS
+// SDK) and under the release environment, as the workflow it replaced did.
+func TestReleaseInputsMatchTheRepository(t *testing.T) {
 	root := repoRoot(t)
 	wf := readFile(t, root, ".github", "workflows", "release.yml")
-	mirror := strings.Index(wf, `alias_tag="src/${GITHUB_REF_NAME}"`)
-	run := strings.Index(wf, "goreleaser/goreleaser-action@")
-	if mirror < 0 {
-		t.Fatal("release.yml does not mirror src/vX.Y.Z onto the release tag")
+	if !strings.Contains(wf, "uses: simtabi/.github/.github/workflows/go-release.yml@") {
+		t.Fatal("release.yml does not call the shared go-release.yml; this guard reads its inputs")
 	}
-	if run < 0 || mirror > run {
-		t.Error("release.yml must mirror the src/ tag before GoReleaser runs")
+	defaults := map[string]string{
+		"module-alias-prefix": "src/",
+		"goreleaser-config":   "src/.goreleaser.yaml",
+		"go-version-file":     "src/go.mod",
+		"changelog":           "CHANGELOG.md",
 	}
-	if !strings.Contains(wf, `git rev-parse -q --verify "refs/tags/${alias_tag}"`) {
-		t.Error("release.yml must leave an existing src/ tag alone: a public tag is never moved")
+	required := map[string]string{
+		"runs-on":     "macos-latest",
+		"environment": "release",
 	}
-	for _, want := range []string{"--config src/.goreleaser.yaml", "go-version-file: src/go.mod", "subject-checksums: .cache/goreleaser/checksums.txt"} {
-		if !strings.Contains(wf, want) {
-			t.Errorf("release.yml lacks %q: the module and GoReleaser's dist moved", want)
+	input := func(name string) []string {
+		return regexp.MustCompile(`(?m)^      ` + name + `:\s*['"]?([^'"\s#]*)`).FindStringSubmatch(wf)
+	}
+	for name, want := range defaults {
+		if m := input(name); m != nil && m[1] != want {
+			t.Errorf("release.yml sets %s to %q; this repository needs the shared default %q", name, m[1], want)
+		}
+	}
+	for name, want := range required {
+		if m := input(name); m == nil || m[1] != want {
+			t.Errorf("release.yml must set %s: %s", name, want)
 		}
 	}
 
@@ -301,5 +314,29 @@ func TestReleaseMirrorsTheSrcTag(t *testing.T) {
 	}
 	if strings.Contains(cfg, "dist: build") {
 		t.Error("src/.goreleaser.yaml writes into build/, which holds one folder per OS and nothing else")
+	}
+}
+
+// otherChannels are the GoReleaser blocks that publish somewhere other than the GitHub release:
+// package managers, images and arbitrary publishers (~/.claude/rules/go.md, owner, 2026-11-13).
+// nfpms stays: it builds the .deb/.rpm/.apk files that ship as release assets.
+var otherChannels = []string{
+	"brews", "homebrew_casks", "scoops", "winget", "chocolateys", "aurs", "aur_sources",
+	"snapcrafts", "flatpaks", "nix", "dockers", "dockers_v2", "docker_manifests", "docker_signs",
+	"kos", "krews", "npms", "cloudsmiths", "furies", "publishers", "blobs", "uploads", "artifactories",
+}
+
+// The GitHub release is the only channel. The Homebrew cask, Scoop manifest and Winget manifest
+// this config published until 2026-11-13 are gone from it and must not come back; the shared
+// workflow refuses such a config at release time, and this fails first, on the pull request.
+func TestGoReleaserPublishesNowhereElse(t *testing.T) {
+	cfg := readFile(t, repoRoot(t), "src", ".goreleaser.yaml")
+	if !regexp.MustCompile(`(?m)^release:`).MatchString(cfg) {
+		t.Fatal("src/.goreleaser.yaml has no release block; the GitHub release is the channel")
+	}
+	for _, k := range otherChannels {
+		if regexp.MustCompile(`(?m)^` + k + `:`).MatchString(cfg) {
+			t.Errorf("src/.goreleaser.yaml publishes through %q; binaries go to the GitHub release only", k)
+		}
 	}
 }
