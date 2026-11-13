@@ -15,7 +15,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   release download fails.
 
 ### Changed
-- `release.yml` calls simtabi/.github's shared `go-release.yml` at `d648d89` (simtabi/.github#30), its latest commit, which adds an optional `node-version` input and changes nothing a caller passes.
+- `release.yml` calls simtabi/.github's shared `go-release.yml` at its `v1.0.0` release (`767e0c0`), pinned as `@<commit>  # v1.0.0` so Dependabot can advance the commit and the tag comment together. The release adds optional inputs only (`node-version` among them) and changes nothing a caller passes.
 - `make check-build` asserts how many files it inspected in `build/`, not only that nothing is out of place: `make build` passes a floor of 2 (`targets.txt` and the binary) and `make cross` and `make dist` one per target plus `targets.txt` and `checksums.txt`, through `BUILD_LAYOUT_MIN`, so a check that reads an empty or wrong directory fails instead of passing.
 - **Binaries ship on the GitHub release only, built on a version tag or on
   request.** A pushed `vX.Y.Z` tag (or `vX.Y.Z-rc.N` pre-release) builds and
