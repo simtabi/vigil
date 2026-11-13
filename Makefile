@@ -9,7 +9,7 @@
 # as macos and .exe on Windows. `make check-build` (TestBuildLayout) fails on
 # anything else.
 #
-# Nothing here publishes. Releases are dispatched by hand (docs/release.md).
+# Nothing here publishes. A release builds on a pushed vX.Y.Z tag or on request (docs/release.md).
 
 SHELL := /usr/bin/env bash
 # `make` alone builds, as it did before the help target existed.

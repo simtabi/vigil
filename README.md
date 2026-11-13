@@ -59,10 +59,25 @@ schedule, keeps the session non-idle with one of two **engines**:
 
 ## Install
 
-vigil is built from source: binary releases are on hold, so there is no
-download, install-script, package-manager or `go install` channel to use. You
-need Go (the version `src/go.mod` names), `git` and `make`; macOS also needs the
-Xcode Command Line Tools, because the input backend uses cgo.
+Download the binary for your platform from the
+[GitHub releases](https://github.com/simtabi/vigil/releases) (`vigil_<os>_<arch>`,
+e.g. `vigil_macos_universal`, `vigil_linux_amd64`), check it against the release's
+`checksums.txt`, and let it install itself:
+
+```bash
+gh release download --repo simtabi/vigil --pattern vigil_macos_universal --pattern checksums.txt
+shasum -a 256 -c checksums.txt --ignore-missing
+chmod +x vigil_macos_universal && ./vigil_macos_universal self install
+vigil doctor
+```
+
+The GitHub release is the only channel: there is no package-manager or
+`go install` path. GitHub lists no vigil release yet (checked 2026-11-13); until
+the first one under the current release workflow is published, build from source.
+
+To build from source you need Go (the version `src/go.mod` names), `git` and
+`make`; macOS also needs the Xcode Command Line Tools, because the input backend
+uses cgo.
 
 ```bash
 git clone https://github.com/simtabi/vigil ~/src/vigil
@@ -72,8 +87,8 @@ vigil doctor
 ```
 
 Then run `vigil config wizard` (or `vigil config init`) and `vigil install`.
-Windows, pinning a version, updating, and the archives published for 0.1.0 to
-0.7.0 are in [docs/installation.md](docs/installation.md).
+Windows, verifying the attestation, pinning a version, updating, and the release
+asset names are in [docs/installation.md](docs/installation.md).
 
 The **input** engine must be installed with `--scope user` (default, GUI
 session); a system-wide service (`--scope system`) is intended for the `graph`
@@ -109,8 +124,8 @@ The full configuration walkthrough is in [docs/configuration.md](docs/configurat
 
 ## Updating
 
-No new releases are published while binary releases are on hold, so update a
-source build from git:
+A release install updates with `vigil upgrade` ([docs/updating.md](docs/updating.md)).
+Update a source build from git:
 
 ```bash
 git -C ~/src/vigil pull --ff-only

@@ -1,48 +1,58 @@
 # Release process
 
-Releases are tag-driven, and binary releases are on hold. The git tag is the
-single source of version truth; `vigil version` is stamped at build time via
-ldflags (`github.com/simtabi/vigil/src/internal/cli.version/commit/date`). A `vX.Y.Z` tag records a version;
-binaries are built from it only when the release workflow is dispatched by hand
-with a confirmation (below). Until binary releases resume, users build from
-source ([installation](installation.md#install)).
+Releases are tag-driven. The git tag is the single source of version truth;
+`vigil version` is stamped at build time via ldflags
+(`github.com/simtabi/vigil/src/internal/cli.version/commit/date`). Binaries ship
+on the GitHub release only: no Homebrew, Scoop, Winget, `go install`, image or
+any other channel. A release builds in one of two ways:
+
+```bash
+git push origin vX.Y.Z                                            # builds and publishes vX.Y.Z
+gh workflow run release.yml --repo simtabi/vigil -f tag=vX.Y.Z    # the same, for a tag already pushed
+```
+
+Because a pushed `vX.Y.Z` tag publishes, push one only for final code. A tag is
+final: it is never moved, deleted or reused. Test builds use `vX.Y.Z-rc.N`, which
+publishes a GitHub pre-release.
 
 ## Cutting a release
 
 1. Move `[Unreleased]` items in `CHANGELOG.md` under a new `## [X.Y.Z]` section
    with the date.
-2. Commit on `main`.
-3. Tag and push:
+2. Land it on `main` through a pull request. A final version with no
+   `## [X.Y.Z]` section is refused.
+3. Tag the merge commit and push the tag. The push builds and publishes the
+   release:
 
    ```bash
-   git tag vX.Y.Z
-   git push origin vX.Y.Z
+   git -C ~/src/vigil tag vX.Y.Z
+   git -C ~/src/vigil push origin vX.Y.Z
    ```
 
-   Pushing a tag publishes nothing: no workflow starts on a tag push.
-4. Only when the owner has approved a binary release for this version, turn the
-   `Release` workflow (`.github/workflows/release.yml`) on, dispatch it on the
-   tag, and turn it off again once the run has started:
+4. To build a release for a tag already on GitHub (a first release of an older
+   tag, or a re-run after a failed one), request it instead:
 
    ```bash
-   gh workflow enable release.yml --repo simtabi/vigil
-   gh workflow run release.yml --repo simtabi/vigil --ref vX.Y.Z -f confirm=release-go
-   gh workflow disable release.yml --repo simtabi/vigil
+   gh workflow run release.yml --repo simtabi/vigil -f tag=vX.Y.Z
    ```
 
-   `vX.Y.Z` must be a real tag already on GitHub. The command publishes for real
-   (GitHub Release, assets, attestation), so run it only for an approved
-   version. The first step refuses to run without `confirm=release-go`, or on
-   any ref that is not a `v[0-9]*` tag, before anything is built.
+   This runs `main`'s `release.yml` and builds the named tag. Do not add
+   `--ref vX.Y.Z`: that runs the copy of `release.yml` the tag carries, which for
+   `v0.1.0` is the older dispatch-only workflow.
 
-**The `Release` workflow is disabled in Actions while binary releases are on
-hold** (since 2026-11-08). A dispatch runs the copy of `release.yml` that the tag
-carries, and the tags `v0.1.0` through `v0.7.0` carry an older one that accepts
-a manual dispatch and publishes with no confirmation step. A tag cannot be
-changed, so the workflow's enabled state is the only control that covers them:
-a disabled workflow runs on no ref. Check it with
-`gh workflow list --repo simtabi/vigil --all`, which shows `Release` as
-`disabled_manually`.
+**The `Release` workflow is still disabled in Actions** (`disabled_manually`
+since 2026-11-08, when binary releases were on hold), so neither a tag push nor a
+request runs it until the owner enables it:
+
+```bash
+gh workflow enable release.yml --repo simtabi/vigil
+gh workflow list --repo simtabi/vigil --all     # Release: active
+```
+
+It was disabled because a dispatch with `--ref` runs the workflow the tag
+carries. Measured 2026-11-13, the only version tag on GitHub is `v0.1.0`, and its
+`release.yml` is dispatch-only and refuses to run without `-f confirm=release-go`,
+so enabling the workflow exposes no unconfirmed release path.
 
 ## Repository layout
 
@@ -107,7 +117,7 @@ Archive names are **version-less** (`vigil_<os>_<arch>.{tar.gz,zip}`) to keep th
 self-update contract stable. macOS ships a **universal** binary
 (`vigil_macos_universal`, Apple Silicon + Intel). macOS artifacts use the `macos`
 token (Go's `darwin` is hard to recognize); self-update sets the updater's OS to
-`macos` accordingly. GitHub release assets stay flat: a dispatched release runs
+`macos` accordingly. GitHub release assets stay flat: a release runs
 GoReleaser from the repository root with `--config src/.goreleaser.yaml`, which
 writes its scratch dist to `.cache/goreleaser/` (gitignored), never into `build/`,
 and uploads from there.
@@ -115,16 +125,18 @@ and uploads from there.
 ## Workflows
 
 ```
- gh workflow run release.yml --repo simtabi/vigil --ref vX.Y.Z -f confirm=release-go
+ git push origin vX.Y.Z   or   gh workflow run release.yml --repo simtabi/vigil -f tag=vX.Y.Z
                       │
                       ▼
-                 release.yml (macOS runner)
-                      ├─ refuse unless confirm=release-go on a v[0-9]* tag
+                 release.yml ─► simtabi/.github go-release.yml (macos-latest, environment release)
+                      ├─ refuse anything but a vX.Y.Z[-pre] tag already on GitHub
+                      ├─ refuse a GoReleaser config holding any other publishing block
+                      ├─ notes from the CHANGELOG section (a final version without one is refused)
                       ├─ mirror src/vX.Y.Z onto the tag
                       ├─ GoReleaser --config src/.goreleaser.yaml ─► .cache/goreleaser/
                       │     binaries + archives + deb/rpm/apk + source tarball + SBOMs
-                      │     + checksums.txt ─► GitHub Release, tap/bucket manifests
-                      ├─ release body from the CHANGELOG section
+                      │     + checksums.txt ─► GitHub Release
+                      ├─ read the release body back; fail if shorter than the section
                       └─ build-provenance attestation over .cache/goreleaser/checksums.txt
 
  pull request ─► ci.yml snapshot ─► build-binaries.yml ─► build/archives/* as run artifacts
@@ -136,9 +148,11 @@ and uploads from there.
   a `mac` job (darwin arm64/amd64 + universal, cgo). Each runs
   `src/scripts/build-all.sh`, verifies `build/checksums.txt` and the `build/`
   layout, and uploads `build/archives/*`.
-- **`release.yml`** — on a confirmed `workflow_dispatch` against a `vX.Y.Z`
-  tag only (a tag push starts nothing): GoReleaser cross-compiles and publishes
-  the GitHub Release, the body is set from the CHANGELOG section, and the
+- **`release.yml`** — on a pushed `vX.Y.Z` tag or a `workflow_dispatch` naming
+  one, a thin caller of simtabi/.github's shared `go-release.yml` with
+  `runs-on: macos-latest` (the darwin targets need cgo) and
+  `environment: release`: GoReleaser cross-compiles and publishes the GitHub
+  Release, its body is the CHANGELOG section (read back and checked), and the
   artifacts get a build-provenance attestation.
 - **`ci.yml`** `snapshot` job — on every pull request and on demand: calls
   `build-binaries` so **ready-to-run binaries are available** as run artifacts
@@ -157,11 +171,13 @@ archive name, the flat inner-binary name, **bare-filename** `checksums.txt`, and
 ## First-release prerequisites
 
 1. Make the repo public.
-2. Create `simtabi/homebrew-tap` and `simtabi/scoop-bucket` repositories.
-3. Add the write deploy keys `HOMEBREW_TAP_DEPLOY_KEY` (on `simtabi/homebrew-tap`) and `SCOOP_BUCKET_DEPLOY_KEY` (on `simtabi/scoop-bucket`), each a repository secret that reaches its one repository and nothing else (the deploy-key guide in
-   `imanimanyara/github-apps` `docs/operations.md`). `TAP_GITHUB_TOKEN` is only
-   a fallback, and the Winget pull request's token.
-4. Push the first `vX.Y.Z` tag, then dispatch the release on it as above.
+2. Enable the `Release` workflow (see [Cutting a release](#cutting-a-release)).
+3. No publishing secrets are needed: the release uses the run's own
+   `GITHUB_TOKEN`. The tap, bucket and Winget credentials
+   (`HOMEBREW_TAP_DEPLOY_KEY`, `SCOOP_BUCKET_DEPLOY_KEY`, `TAP_GITHUB_TOKEN`) are
+   no longer read.
+4. Push the first `vX.Y.Z` tag, or request the release of an existing one, as
+   above.
 
 Every release carries a real, human-readable description sourced from the
 CHANGELOG — never a bare "see changelog" stub. Keep GitHub Actions current via
