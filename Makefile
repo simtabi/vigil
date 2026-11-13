@@ -31,6 +31,12 @@ BIN       := build/$(HOST_OS)/$(BINARY)$(EXE)
 # `make install` copies the host build here (may need sudo).
 BINDIR ?= /usr/local/bin
 
+# The fewest entries `make check-build` must inspect in build/: the files at its
+# root and in each OS folder. Each build passes what it just wrote (the host
+# build: targets.txt and the binary; cross: targets.txt, checksums.txt and one
+# binary per target), so a check reading an empty or wrong directory fails.
+BUILD_LAYOUT_MIN ?= 1
+
 .PHONY: help build build-local install test vet fmt lint cross cross-check dist check-build icons clean
 
 help: ## Show this help
@@ -43,7 +49,7 @@ build: build-local ## Build $(BIN) for the current OS (the same as build-local)
 
 build-local: ## Build $(BIN) with the host's Go toolchain
 	go -C src build -trimpath -ldflags "$(LDFLAGS)" -o ../$(BIN) $(MAIN)
-	@$(MAKE) --no-print-directory check-build
+	@$(MAKE) --no-print-directory check-build BUILD_LAYOUT_MIN=2
 
 install: build-local ## Build, then copy $(BIN) to $(BINDIR) (default /usr/local/bin; may need sudo)
 	install -d "$(BINDIR)"
@@ -63,7 +69,7 @@ lint: ## Run golangci-lint (config in src/.golangci.yml), if installed
 
 cross: ## Cross-compile every target in build/targets.txt into build/<os>/
 	VERSION=$(VERSION) COMMIT=$(COMMIT) DATE=$(DATE) ./src/scripts/build-all.sh
-	@$(MAKE) --no-print-directory check-build
+	@$(MAKE) --no-print-directory check-build BUILD_LAYOUT_MIN=$$(( $$(grep -cvE '^[[:space:]]*(#|$$)' build/targets.txt) + 2 ))
 
 cross-check: ## Compile every package for the cgo-free targets, writing nothing (the former `make cross`)
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go -C src build ./...
@@ -72,10 +78,10 @@ cross-check: ## Compile every package for the cgo-free targets, writing nothing 
 
 dist: ## cross, plus .tar.gz/.zip archives in build/archives/ (publishes nothing)
 	ARCHIVES=1 VERSION=$(VERSION) COMMIT=$(COMMIT) DATE=$(DATE) ./src/scripts/build-all.sh
-	@$(MAKE) --no-print-directory check-build
+	@$(MAKE) --no-print-directory check-build BUILD_LAYOUT_MIN=$$(( $$(grep -cvE '^[[:space:]]*(#|$$)' build/targets.txt) + 2 ))
 
 check-build: ## Fail when build/ holds anything but the OS folders, inputs, checksums.txt and archives/
-	go -C src test ./internal/release -run 'TestBuildLayout$$' -count=1
+	BUILD_LAYOUT_MIN=$(BUILD_LAYOUT_MIN) go -C src test ./internal/release -run 'TestBuildLayout$$' -count=1
 
 icons: ## Regenerate brand PNGs + Windows resource (.syso) from assets/vigil.svg
 	cd src/tools/iconz && go run .
