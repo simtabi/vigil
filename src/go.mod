@@ -10,13 +10,13 @@ require (
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
-	github.com/creativeprojects/go-selfupdate v1.7.0
+	github.com/creativeprojects/go-selfupdate v1.7.1
 	github.com/fsnotify/fsnotify v1.10.1
-	github.com/gofrs/flock v0.13.1
+	github.com/gofrs/flock v0.13.2
 	github.com/kardianos/service v1.3.0
 	github.com/spf13/cobra v1.10.2
-	golang.org/x/sys v0.49.0
-	golang.org/x/term v0.47.0
+	golang.org/x/sys v0.50.0
+	golang.org/x/term v0.48.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
 
@@ -39,7 +39,7 @@ require (
 	github.com/fatih/color v1.16.0 // indirect
 	github.com/go-fed/httpsig v1.1.0 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.2 // indirect
-	github.com/google/go-github/v86 v86.0.0 // indirect
+	github.com/google/go-github/v93 v93.0.0 // indirect
 	github.com/google/go-querystring v1.2.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
