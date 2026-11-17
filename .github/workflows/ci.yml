@@ -58,6 +58,29 @@ jobs:
       - name: linux/arm64
         run: CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go -C src build ./...
 
+  govulncheck:
+    name: govulncheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: src/go.mod
+          cache-dependency-path: src/go.sum
+          check-latest: true
+
+      # Pinned, and the pin has to move with the toolchain: a govulncheck built by
+      # an older Go cannot load a newer standard library, and v1.1.4 refuses a
+      # `go 1.27` module outright ("package requires newer Go version go1.27").
+      # Move this whenever src/go.mod crosses a minor.
+      - run: go install golang.org/x/vuln/cmd/govulncheck@v1.9.0
+
+      # The module lives in src/: run from there, or the scan finds no packages
+      # and reports a clean tree.
+      - name: Scan the module and the standard library it builds against
+        run: cd src && "$(go env GOPATH)/bin/govulncheck" ./...
+
   lint:
     name: golangci-lint
     runs-on: ubuntu-latest

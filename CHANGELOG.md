@@ -8,6 +8,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Security
 
+- **CI scans for known vulnerabilities.** A `govulncheck` job runs on every pull request,
+  pinned to `v1.9.0`. vigil had no vulnerability scan of any kind, which is why it sat on an
+  advisory-carrying Go release with nothing reporting it -- the exposure was found by comparing
+  this repo's Go pin against probaci's, not by any check here. The job runs from `src/`, because
+  a scan started at the repository root finds no packages and reports a clean tree. Its pin is
+  tied to the toolchain in a comment: a govulncheck built by an older Go cannot load a newer
+  standard library.
 - **The build moves off Go 1.26.0, the unpatched first 1.26 release.** `src/go.mod` is the only
   Go pin here -- every `setup-go` in `ci.yml` and `build-binaries.yml` reads
   `go-version-file: src/go.mod` -- so `go 1.26.0` had CI building on 1.26.0 exactly rather than a
