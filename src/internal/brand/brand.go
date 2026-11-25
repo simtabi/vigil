@@ -21,7 +21,7 @@ const (
 	Tagline     = "Keep Microsoft Teams active on a schedule."
 	Description = "Keeps your Microsoft Teams presence green — on a schedule or " +
 		"at will — using synthetic input or the Graph presence API."
-	Author     = "Imani Manyara <imani@simtabi.com>"
+	Author     = "Imani Manyara <opensource@simtabi.com>"
 	Contact    = "opensource@simtabi.com"
 	URLProduct = "https://opensource.simtabi.com/products/vigil"
 	URLRepo    = "https://github.com/simtabi/vigil"

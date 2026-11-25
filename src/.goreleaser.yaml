@@ -112,7 +112,7 @@ nfpms:
     package_name: vigil
     vendor: Simtabi LLC
     homepage: "https://opensource.simtabi.com/products/vigil"
-    maintainer: "Imani Manyara <imani@simtabi.com>"
+    maintainer: "Imani Manyara <opensource@simtabi.com>"
     description: "Keep Microsoft Teams active on a configurable schedule."
     license: MIT
     formats: [deb, rpm, apk]
